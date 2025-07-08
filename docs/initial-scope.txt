@@ -1,0 +1,57 @@
+I want to build a POC for a multi-agent ai system. 
+We will implement a sequential multi-agent pattern with handoffs, flow orchestrated via code.
+We will a very capable model for agent execution, openai o3.
+The goal of the application is to generate a list of business ideas for a certain set of preferences. The preference properties:
+1) Vertical
+2) Sub-vertical
+3) Business model
+Example: 
+1) Media & Entertainment
+2) Digital Media & Content Creation
+3) B2B SaaS
+In the scope of the POC, the preferences will be hardcoded in constants in the code.
+
+The business ideas will be generated and evaluated according to the following flow
+1) Ideation Agent (no external tools available)
+- takes the preferences
+- generates 10 detailed business ideas. what is possible with the current state of tech but has not been done yet?
+a) title of the idea
+b) description of how the idea works
+c) description of the business model - how does the business make money
+- evaluates potential and exeuction along four dimensions, scoring from 0 (bad) to 10 (optimal):
+a) disruption potential + reasoning why
+b) market potential + reasoning why
+c) technical complexity + reasoning why
+d) capital intensity + reasoning why
+- once done: handoff to agent 2)
+
+2) Competitor Agent (web_search tool available)
+- looks at each of the business ideas and searches the web for companies that offer similar products or services
+- this agent should do extensive searchings, it should look at at least 25 web sources before it concludes anything
+- summarizes the findings in two new dimensions
+a) "blue ocean score" from 0 (bad) to 10 (optimal):
+b) reasoning for the score
+- once done: handoff to agent 3)
+
+3) Business Critic Agent (web_search tool available)
+- looks at each of the business ideas, the various scores and reasons with a critical perspective
+- does a lot of research in the web to find proof points why things are maybe not as rosa as predicted by the other agents
+- - summarizes the findings in two new dimensions
+a) "overall score" from 0 (bad) to 10 (optimal):
+b) reasoning for the overall score
+- once done: handoff to agent 4)
+
+4) Documentation agent
+- this agent takes all the findings of the previous agents an creates a nice output document in md format
+- for each business idea, the agent creates a separate table in md so it's easy to read
+- we also include some statistics, like number of web sites searched and total processing time per idea
+- in a summary the top 3 ideas are highlighted
+
+
+The system uses the OpenAI Agents SDK for Typescript, no python.
+The system uses the concepts, guides and best practices documented in the openai agent sdk for typescript https://openai.github.io/openai-agents-js/
+The system uses modern npm packages with the latest stable versions.
+Logging is done with Winston.
+The system uses modern typescript best practices.
+We don't implement any tests now - this will come later
+CI is done in github actions.

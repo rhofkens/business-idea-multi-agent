@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "alwaysAllow": [
+        "resolve-library-id",
+        "get-library-docs"
+      ]
+    },
+    "quotes": {
+      "command": "node",
+      "args": [
+        "/Users/roelandhofkens/Projects/Ai/mcp-quotes-server/dist/start.js"
+      ],
+      "env": {
+        "SERPER_API_KEY": "9f73fd95478a33941a8f22903e005afe4056f2e6"
+      },
+      "alwaysAllow": [],
+      "disabled": true
+    }
+  }
+}

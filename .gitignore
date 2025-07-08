@@ -1,0 +1,14 @@
+# Dependencies
+/node_modules
+/dist
+
+# Env
+.env
+
+# Logs
+*.log
+logs/
+*.csv
+
+# IDE
+.vscode/

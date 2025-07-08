@@ -1,0 +1,45 @@
+{
+  "name": "business-idea-multi-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rhofkens/business-idea-multi-agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rhofkens/business-idea-multi-agent/issues"
+  },
+  "homepage": "https://github.com/rhofkens/business-idea-multi-agent#readme",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "@typescript-eslint/eslint-plugin": "^8.36.0",
+    "@typescript-eslint/parser": "^8.36.0",
+    "eslint": "^9.30.1",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.5.1",
+    "globals": "^16.3.0",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.36.0"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.0.10",
+    "dotenv": "^17.1.0",
+    "zod": "^3.25.76"
+  }
+}
