@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "ts-node src/main.ts",
+    "start": "node --loader ts-node/esm src/main.ts",
     "build": "tsc",
     "lint": "eslint . --ext .ts"
   },

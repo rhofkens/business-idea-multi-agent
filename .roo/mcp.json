@@ -10,6 +10,16 @@
         "resolve-library-id",
         "get-library-docs"
       ]
+    },
+    "docs-mcp-server": {
+      "url": "http://localhost:6280/sse",
+      "disabled": false,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "search_docs",
+        "find_version",
+        "fetch_url"
+      ]
     }
   }
 }
