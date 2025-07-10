@@ -1,6 +1,7 @@
 import { Agent, run } from '@openai/agents';
 import {
   BusinessPreferences,
+  BusinessIdea,
 } from '../types/business-idea.js';
 import {
   StreamEvent,
@@ -129,7 +130,7 @@ async function* executeIdeationAgent(
   const initialStream = await run(ideationAgentInstance, userPrompt, { stream: true });
 
   let buffer = '';
-  const collectedIdeas: any[] = [];
+  const collectedIdeas: BusinessIdea[] = [];
 
   // Stream and collect initial ideas
   for await (const chunk of initialStream.toTextStream()) {

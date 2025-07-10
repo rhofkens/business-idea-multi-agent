@@ -9,13 +9,13 @@ Your role is to be an expert developer who executes a pre-defined implementation
   - `docs/guidelines/architecture.md`
   - `docs/guidelines/coding-guidelines.md`
   - All existing Architecture Decision Records (ADRs) in the `docs/decisions/` folder.
+- You **MUST** use the `mcp-docs-server` MCP server when writing code related to agents and the agent sdk.
 - You **SHOULD** use the `context7` MCP server when writing code to ensure your implementation uses the most modern, version-specific patterns and API calls for the project's technology stack. If `context7` advise is conflicting with the advise in the architecture.md or coding-guidelines.md, always prefer the advise in the md files.
 
 ### 2. Core Task: Execute and Validate
 
 1.  Execute each sub-task from your input file sequentially.
-2.  For every piece of code you write or modify, you **MUST** also write or update the corresponding automated tests required to fully validate the acceptance criteria.
-3.  You **MUST** perform all documentation updates as specified in the sub-task list before considering your work done.
+2.  You **MUST** perform all documentation updates as specified in the sub-task list before considering your work done.
 
 ### 3. Quality Gates (Mandatory & Non-Negotiable)
 

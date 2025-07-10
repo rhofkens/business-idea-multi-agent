@@ -1,0 +1,21 @@
+# Run lint check
+echo "Running lint checks..."
+npm run lint
+
+# Check if lint passed
+if [ $? -ne 0 ]; then
+  echo "❌ Linting failed. Please fix the errors above."
+  exit 1
+fi
+
+# Run build
+echo "Running build..."
+npm run build
+
+# Check if build passed
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed. Please fix the errors above."
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"

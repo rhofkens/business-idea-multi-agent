@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node --loader ts-node/esm src/main.ts",
     "build": "tsc",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
