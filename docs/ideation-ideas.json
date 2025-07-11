@@ -1,0 +1,152 @@
+[
+  {
+    "title": "PromptScape Storyboard AI",
+    "description": "A Figma-style web platform that converts a 5-line brief into a 20-40-frame, shot-listed storyboard (2K resolution) in <120 seconds. Fine-tuned diffusion/LLM hybrids encode 150+ cinematography principles (rule-of-thirds, lens length, lighting cues) and 2,000 brand style guides. Live co-editing, version control, and automatic animatics cut pre-production from 10 days to <1 day.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 6,
+    "marketPotential": 7,
+    "technicalComplexity": 8,
+    "capitalIntensity": 6,
+    "reasoning": {
+      "disruption": "Storyboarding spend is only ~3 % of the $35 B pre-production budget, so full industry displacement is limited. Biggest value is 5–10× speed for large agencies, not elimination of human artists. Strong network effect via shared asset libraries.",
+      "market": "Targetable TAM ≈ $1.1 B (mid-tier studios + 40 k agencies). If 25 % adopt at $150/seat/mo → $50 M ARR by Y5. Upsell to previz and animatics can double ARPU.",
+      "technical": "Must chain GPT-4o for shot list → ControlNet-guided diffusion → SVG overlay. Requires β-level integration with Adobe Premiere and Unreal Engine to avoid rip-and-replace friction.",
+      "capital": "$18 M seed-to-Series A: $6 M model tuning, $4 M GPU credits (2 yrs on-demand A100), $3 M creator marketplace incentives, $5 M GTM. Breakeven possible in Y3 at 15 k seats."
+    }
+  },
+  {
+    "title": "HoloPipeline",
+    "description": "AWS-native service that auto-decimates 4-gigapoint volumetric clips to 5-10 M polys, bakes PBR textures, and streams in 6DoF using a proprietary Draco-v2 codec. Upload→Playback in <15 min. Edge nodes in 42 POPs keep motion-to-photons below 90 ms on Meta Quest 3, iPhone-15 Pro, and Apple Vision Pro.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 8,
+    "marketPotential": 6,
+    "technicalComplexity": 9,
+    "capitalIntensity": 7,
+    "reasoning": {
+      "disruption": "Reduces volumetric post pipeline cost from ~$30k/ minute to <$2k/ minute, opening the door for sports franchises, museums, and UGC creators. First mover advantage on codec IP could create a de-facto standard, similar to H.264 in 2D.",
+      "market": "Realistic near-term SAM: $3.5 B (enterprise training, live sports highlights, location-based entertainment). AR headset install base only 15 M today; hitting $20 B TAM depends on >100 M devices (~2028–29).",
+      "technical": "Need CUDA/Metal compute, meshlet partitioning, and ML-based foveated streaming. Patent risk around point-cloud codecs (see MPEG V-PCC).",
+      "capital": "$65 M through Series B: 55 % to GPU and CDN capacity, 20 % codec R&D, 15 % developer SDK grants, 10 % go-to-market with capture-stage vendors. Cash-flow positive at 2 PB/mo egress (~2,000 hrs of 6DoF content)."
+    }
+  },
+  {
+    "title": "RoyaltyChain Hub",
+    "description": "ISO-20022-compliant clearinghouse that ingests real-time usage data from Spotify, TikTok, YouTube, and 70 others, notarises it on a Layer-2 rollup (0.4 ¢ gas / 10 k tx), and auto-splits payments to 1.6 M rights holders with sub-cent precision. SOC-2 dashboard gives CFOs audit-ready reports in one click.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 5,
+    "marketPotential": 7,
+    "technicalComplexity": 7,
+    "capitalIntensity": 6,
+    "reasoning": {
+      "disruption": "Labels already operate proprietary pipes (UMG’s Maestro, WMG’s Ryghts). RoyaltyChain’s wedge is in cross-platform reconciliation for indies and mid-majors; displacement of Tier-1 stacks unlikely.",
+      "market": "Addressable flow ≈ $11 B (indie + publishing catalogues). 15 bps take-rate on $3 B processed by Y5 → $45 M ARR. EU’s 2025 ‘Transparency in Music’ directive acts as tail-wind.",
+      "technical": "Biggest lift is normalising heterogeneous APIs and resolving ISRC/ISWC conflicts (2 % mismatch rate causes 12 % payout delays). Uses zk-proofs for privacy-preserving splits.",
+      "capital": "$28 M to hit Series A: $8 M engineering, $6 M licensing/legal across 38 territories, $4 M validator incentives, $10 M contingency. Cash-flow break in Y4 at 800 M monthly transactions."
+    }
+  },
+  {
+    "title": "AuthenVision",
+    "description": "Sub-10 ms inference API that fingerprints incoming video against a 6-B frame perceptual hash corpus and applies GAN-based tamper detection (PSNR delta >3 dB). CMS plug-ins auto-embed W3C C2PA provenance tags. Audit log stored on immutable object storage for 7 yrs to satisfy EU AI Act.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 7,
+    "marketPotential": 8,
+    "technicalComplexity": 7,
+    "capitalIntensity": 5,
+    "reasoning": {
+      "disruption": "First end-to-end ‘trust API’ bundled with indemnity insurance—turns compliance cost into one-click opt-in. Could become default like SSL certificates (Let’s Encrypt).",
+      "market": "Brand-safety + regtech spend hits $18 B in 2026. If upcoming US ‘DEEPFAKES Act’ passes (2025 draft) verification may become mandatory, swelling SAM to ~$25 B.",
+      "technical": "Arms race with generative models → must ship monthly adversarial updates. Edge in 40 ms path for live streams <5 s latency budget.",
+      "capital": "$22 M to reach 250 M monthly checked assets: $9 M data licensing, $6 M GPU/edge nodes, $4 M insurance pool, $3 M GTM. 92 % gross margin at scale."
+    }
+  },
+  {
+    "title": "MetaStage Live",
+    "description": "Turn-key capture kits (6 Azure Kinect + 12 audio mics) + Unreal Engine pixel-streaming render concerts into navigable worlds in sub-2 s latency. Fans buy $12 NFTs for avatar skins and merch drops. Promoter console handles ticketing (Stripe) and concurrency scaling to 250 k users/show.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 7,
+    "marketPotential": 6,
+    "technicalComplexity": 8,
+    "capitalIntensity": 7,
+    "reasoning": {
+      "disruption": "Upsell, not replace, live tickets: early deployments show +28 % revenue per event (Tencent Music data). Risk: artists unwilling to wear mocap suits—need passive capture.",
+      "market": "Hybrid event spend ~$6 B today, CAGR 24 %. Achievable SAM $1.4 B (top 5 k touring acts, eSports leagues).",
+      "technical": "Bottleneck is sub-100 ms audio-visual sync across WebRTC clusters; mitigation via proprietary jitter buffer. DRM for UGC re-streams still unsolved.",
+      "capital": "$70 M Series B: $20 M hardware rev-share with rental firms, $30 M edge GPU fleet, $10 M artist BD, $10 M infra/ops. Payback in Y5 at 500 ticketed events/yr."
+    }
+  },
+  {
+    "title": "LinguaMorph Studio",
+    "description": "API and web studio that converts a 90-minute feature into 50 languages in <6 h. Uses diffusion-based voice cloning (≤2 s training clip) with emotional prosody transfer (CCC > 0.92) and auto-lip-re-timing via face-landmark GAN. Outputs Dolby Atmos mixes + IMSC-1 subtitles.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 8,
+    "marketPotential": 9,
+    "technicalComplexity": 8,
+    "capitalIntensity": 6,
+    "reasoning": {
+      "disruption": "Slashes localisation cost from $120k (manual dub) to ~$8k, enabling day-and-date global drops even for indie titles. Threatens 1,200 dubbing studios worldwide.",
+      "market": "$5.7 B spend on AV localisation in 2023, growing 12 % CAGR. Capturing 15 % share yields ~$850 M revenue. Gaming cut-scene and corporate e-learning add another $1 B SAM.",
+      "technical": "Union compliance: stores emotion embeddings only, not raw voices, satisfying SAG-AFTRA guidelines. Watermarked outputs deter misuse.",
+      "capital": "$38 M total to breakeven Y3: $15 M data licensing (multi-lingual corpora), $10 M GPU/TPU, $6 M union/legal, $7 M GTM. 80 % gross margin at scale."
+    }
+  },
+  {
+    "title": "AdGenius Generator",
+    "description": "AI placement engine that detects ‘brandable moments’ (logo visibility >60 px, screen time >1 s) and ray-traces 3D products with correct lighting in <300 ms/frame. Self-serve marketplace lets rights owners auction inventory; automated clearance workflow ingests clearance codes and talent contracts.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 6,
+    "marketPotential": 7,
+    "technicalComplexity": 8,
+    "capitalIntensity": 6,
+    "reasoning": {
+      "disruption": "Adds new inventory without viewer drop-off, but faces creative-control pushback and potential ad-blocker countermeasures. Competitive with Amazon ‘Virtual Product Placement’.",
+      "market": "Dynamic in-scene ad spend just $0.4 B today but 70 % YoY growth. If reaches 2 % of $210 B digital video spend by 2028 → $4 B, realistic share for platform 25 %.",
+      "technical": "Must solve occlusion, motion blur, intelligent shading across SDR/HDR masters. Multi-model guardrails avoid mis-match (e.g., alcohol in kids’ shows).",
+      "capital": "$48 M through Series B: $20 M model training + render farm, $10 M brand/rights owner onboarding, $18 M legal/policy. Break-even in Y4 at 3 B ad-impressions/mo."
+    }
+  },
+  {
+    "title": "NeuroPulse Insights",
+    "description": "Opt-in desktop/mobile SDK runs on-device CNNs (OpenVINO) estimating HRV (RMSSD), eye fixation, and 32 facial AUs at 30 fps, sending only anonymised engagement scores (GDPR compliant) to the cloud. Editors get heat-maps and retention prediction with ±5 % error vs traditional labs.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 6,
+    "marketPotential": 5,
+    "technicalComplexity": 7,
+    "capitalIntensity": 5,
+    "reasoning": {
+      "disruption": "Remote panels cut costs 20× but privacy worries limit consumer opt-in rates (~8 %). Browser vendors may restrict camera access further (see Chrome’s ‘Privacy Sandbox’).",
+      "market": "Current trailer/testing spend ~$900 M. Even if tech unlocks SMB creators, ceiling likely <$2 B. 10 % platform share = $200 M ARR max.",
+      "technical": "Need robust calibration-free vitals; HRV accuracy drops 30 % under low light. Mitigation: prompt users for 3-s face alignment.",
+      "capital": "$24 M to scale: $6 M R&D, $5 M privacy/legal, $8 M panel recruitment incentives, $5 M GTM. Gross margin 70  %, payback Y4 with 25 k active testers."
+    }
+  },
+  {
+    "title": "VPro Virtual Production Hub",
+    "description": "Chrome-native workspace syncing Unreal/Unity scenes with camera tracker telemetry (Free-D, Ncam) at 120 Hz. Producers storyboard, adjust lighting, and direct talent remotely; cloud GPUs render proxy frames (720p) in <50 ms for on-set preview—no LED wall required.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 5,
+    "marketPotential": 6,
+    "technicalComplexity": 7,
+    "capitalIntensity": 6,
+    "reasoning": {
+      "disruption": "Addresses 80 % of productions that cannot afford $1 M LED stages, but high-end shows will still favour volumes for in-camera VFX. Could bundle with PromptScape as upstream funnel.",
+      "market": "Virtual production tool spend $1.6 B in 2023 → $3.8 B 2028. If cloud-first captures 15 % share, platform could hit $570 M ARR.",
+      "technical": "Core hurdle: synchronising genlock/timecode over WAN. Solution: PTP-over-5G with ±1 µs accuracy. Requires local caching for connection loss.",
+      "capital": "$42 M: $20 M GPU cloud credits, $8 M integrations, $6 M BD with rental houses, $8 M marketing. EBITDA-positive Y4 at 4 k monthly seats."
+    }
+  },
+  {
+    "title": "QuantumRender Cloud",
+    "description": "Hybrid classical-quantum rendering service running VQE-accelerated path tracing on 500-qubit neutral-atom processors (2028 roadmap). Early SDK lets studios offload noise sampling; achieves 40–60× speed-up on global illumination vs CPU clusters, validated on Disney’s Moana Island scene.",
+    "businessModel": "SaaS",
+    "disruptionPotential": 8,
+    "marketPotential": 6,
+    "technicalComplexity": 10,
+    "capitalIntensity": 9,
+    "reasoning": {
+      "disruption": "If quantum advantage materialises before 2030, could decimate $2 / core-hour render farms. Risk: photonic or error-corrected qubit timelines slip, nullifying thesis.",
+      "market": "Render spend $10 B; early adopters (top 20 studios) = $1.5 B. Wider market gated by quantum supply and developer skills.",
+      "technical": "Requires error mitigation (ZNE) and hybrid scheduler to bounce workloads between GPU and QPU. IP landscape immature—freedom-to-operate risk.",
+      "capital": "$180 M pre-2029: $90 M QPU access/partnerships, $40 M graphics R&D, $25 M talent, $25 M GTM. Break-even unlikely before 2031; needs strategic investors with long horizon."
+    }
+  }
+]

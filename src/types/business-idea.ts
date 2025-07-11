@@ -16,7 +16,7 @@ export interface BusinessPreferences {
 export interface BusinessIdea {
   title: string;
   description: string;
-  businessModel: string;
+  businessModel: 'B2B' | 'B2C' | 'B2B2C' | 'Marketplace' | 'SaaS' | 'DTC';
   disruptionPotential: number;
   marketPotential: number;
   technicalComplexity: number;

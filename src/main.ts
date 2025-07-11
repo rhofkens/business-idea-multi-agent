@@ -5,6 +5,12 @@ import { AgentOrchestrator } from './orchestrator/agent-orchestrator.js';
 async function main() {
   loggingService.log({ level: 'INFO', message: 'Application starting.' });
   
+  // Check for test cache flag
+  const useTestCache = process.argv.includes('--test-cache');
+  if (useTestCache) {
+    console.log('🧪 Test cache mode enabled - will use cached results when available');
+  }
+  
   // Verify API key is loaded
   if (!configService.openAIApiKey) {
     loggingService.log({ level: 'ERROR', message: 'OpenAI API key is missing. Shutting down.' });
@@ -14,7 +20,7 @@ async function main() {
   const orchestrator = new AgentOrchestrator();
 
   try {
-    const finalResult = await orchestrator.runChain();
+    const finalResult = await orchestrator.runChain(useTestCache);
     console.log('Agent chain executed successfully.');
     console.log('Final Output:', finalResult);
     loggingService.log({ level: 'INFO', message: 'Application finished successfully.', details: `Final output: ${finalResult}` });
