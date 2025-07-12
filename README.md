@@ -11,6 +11,46 @@ The system operates as a chain of specialized AI agents, orchestrated to perform
 3.  **Business Critic Agent**: Critically evaluates ideas using web search capabilities for competitive intelligence. It performs risk assessment, validates assumptions, and calculates an Overall Score based on multiple weighted factors.
 4.  **Documentation Agent**: Generates comprehensive markdown reports for the validated business ideas, including detailed analysis, insights, and recommendations.
 
+## Ideation Agent
+
+The Ideation Agent is responsible for generating innovative business ideas based on market trends and consumer needs. It:
+
+### Key Features
+
+- **Multi-Industry Focus**: Generates ideas across healthcare, education, sustainability, fintech, retail/e-commerce, and lifestyle
+- **Two-Pass Generation Process**: Uses the 'o3' model to generate 10 high-quality ideas per industry, then selects the top 10 overall
+- **Comprehensive Idea Details**: Each idea includes name, description, problem statement, solution, target market, and more
+- **Initial Scoring**: Provides preliminary scores for disruption potential, market potential, technical complexity, and capital intensity
+- **Event Streaming**: Provides real-time progress updates during the generation process
+
+### Output Format
+
+Each idea contains:
+- Name and description
+- Industry classification
+- Problem solved and proposed solution
+- Target market definition
+- Initial viability scores (0-10 scale)
+
+## Competitor Analysis Agent
+
+The Competitor Analysis Agent evaluates the competitive landscape for each business idea using Blue Ocean Strategy principles. It:
+
+### Key Features
+
+- **Competitor Identification**: Finds and analyzes 4-6 relevant competitors for each idea
+- **Market Saturation Analysis**: Evaluates how crowded the competitive space is
+- **Blue Ocean Scoring**: Implements ADR-003 methodology to calculate innovation potential
+- **Differentiation Factors**: Identifies unique aspects that set the idea apart from competitors
+- **Event Streaming**: Provides real-time progress updates during analysis
+
+### Blue Ocean Score Calculation
+
+The score (0-10 scale) is based on:
+- **Market Saturation** (40% weight): Lower saturation = higher score
+- **Innovation Level** (35% weight): More innovative = higher score  
+- **Differentiation Clarity** (25% weight): Clearer unique value = higher score
+
 ## Business Critic Agent
 
 The Business Critic Agent is responsible for the critical evaluation and risk assessment of business ideas. It:
@@ -36,18 +76,6 @@ The Overall Score is calculated using a two-step process:
 2. **Risk Adjustments**:
    - For each major risk identified, the score is reduced by 0.5 to 2.0 points
    - Maximum total reduction: 5.0 points
-
-### Usage
-
-```typescript
-import { runCriticAgent, runCriticAgentWithCache } from './src/agents/critic-agent';
-
-// For production use
-const results = await runCriticAgent(ideas);
-
-// For development with caching
-const cachedResults = await runCriticAgentWithCache(ideas);
-```
 
 ## Documentation Agent
 
@@ -76,23 +104,6 @@ The generated reports follow this structure:
    - Implementation Roadmap
    - Funding Considerations
 3. **Summary and Recommendations**: Highlights top 3 ideas with strategic insights and next steps
-
-### Usage
-
-```typescript
-import { runDocumentationAgent, runDocumentationAgentWithCache } from './src/agents/documentation-agent';
-
-// For production use
-const result = await runDocumentationAgent({
-  ideas: analyzedBusinessIdeas
-});
-console.log(`Report saved to: ${result.reportPath}`);
-
-// For development with caching
-const cachedResult = await runDocumentationAgentWithCache({
-  ideas: analyzedBusinessIdeas
-});
-```
 
 ## Installation
 
@@ -139,46 +150,39 @@ This will:
 3. Critically evaluate each idea with risk assessment
 4. Generate a comprehensive markdown report in `docs/output/`
 
-### Running Individual Agents
-
-You can also run agents independently:
+### Command Line Options
 
 ```bash
-# Run only the ideation agent
-npm run start:ideation
-
-# Run only the competitor analysis
-npm run start:competitor
-
-# Run only the business critic
-npm run start:critic
-
-# Run only the documentation agent
-npm run start:documentation
+# Run with test cache enabled (for development)
+npm run start -- --test-cache
 ```
 
-### Development Mode
+**Note**: Individual agent execution is not currently supported via npm scripts. The system is designed to run as a complete chain through the orchestrator.
 
-For development with test caching enabled:
+### Development Mode with Test Cache
+
+The test cache feature helps speed up development by caching agent outputs:
 
 ```bash
-npm run dev
+# Run with test cache enabled
+npm run start -- --test-cache
 ```
 
-### Running Tests
+When enabled, the system will:
+- Cache agent outputs in `tests/cache/` directory
+- Reuse cached results on subsequent runs
+- Display a message: "🧪 Test cache mode enabled"
+
+This is particularly useful during development to avoid waiting for AI responses when testing downstream agents.
+
+### Code Quality Commands
 
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
 # Run linting
 npm run lint
 
-# Run type checking
-npm run type-check
+# Run type checking (builds the project)
+npm run build
 ```
 
 ### Output
@@ -189,11 +193,22 @@ All generated reports are saved in the `docs/output/` directory with timestamped
 
 ## Configuration
 
-The system can be configured through environment variables:
+### Environment Variables
 
-- `OPENAI_API_KEY`: Your OpenAI API key (required)
-- `LOG_LEVEL`: Logging level (default: 'INFO')
-- `USE_TEST_CACHE`: Enable test caching for development (default: false)
+Create a `.env` file with the following:
+
+```env
+OPENAI_API_KEY=your-api-key-here
+```
+
+### Command Line Options
+
+- `--test-cache`: Enable test caching for development. Caches agent outputs in `tests/cache/` to speed up repeated runs.
+
+Example:
+```bash
+npm run start -- --test-cache
+```
 
 ## Architecture
 
