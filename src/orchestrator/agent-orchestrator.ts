@@ -1,10 +1,11 @@
 import { ideationAgent } from '../agents/ideation-agent.js';
 import { runCompetitorAgent } from '../agents/competitor-agent.js';
-// import { criticAgent } from '../agents/critic-agent.js';
-// import { documentationAgent } from '../agents/documentation-agent.js';
+import { runCriticAgentWithCache } from '../agents/critic-agent.js';
+import { runDocumentationAgent } from '../agents/documentation-agent.js';
 import { loggingService } from '../services/logging-service.js';
 import { BusinessPreferences, BusinessIdea } from '../types/business-idea.js';
 import { TestCacheService } from '../services/test-cache-service.js';
+import type { DocumentationAgentOutput } from '../types/agent-types.js';
 
 /**
  * Orchestrates the sequential execution of the agent chain.
@@ -208,6 +209,129 @@ export class AgentOrchestrator {
           level: 'INFO',
           message: 'Competitor Analysis Agent finished successfully.',
           details: `Analyzed ${competitorCount} business ideas.`,
+        });
+      }
+
+      // Step 3: Run Business Critic Agent
+      let criticallyEvaluatedIdeas: BusinessIdea[] = enrichedIdeas;
+      let criticalCount = 0;
+      
+      if (enrichedIdeas.length > 0) {
+        console.log('\n\n🎯 Starting critical evaluation and risk assessment...\n');
+        
+        loggingService.log({
+          level: 'INFO',
+          message: 'Starting Business Critic Agent',
+          details: `Processing ${enrichedIdeas.length} business ideas for critical evaluation`,
+        });
+
+        // Use test cache for critic agent if enabled
+        criticallyEvaluatedIdeas = await runCriticAgentWithCache(
+          { businessIdeas: enrichedIdeas },
+          useTestCache
+        );
+
+        // Update count
+        criticalCount = criticallyEvaluatedIdeas.length;
+        
+        if (useTestCache && criticallyEvaluatedIdeas.length > 0) {
+          console.log(`\n📦 Loaded ${criticallyEvaluatedIdeas.length} critically evaluated ideas from cache`);
+        }
+
+        // Log the first idea's Overall Score as per acceptance criteria
+        if (criticallyEvaluatedIdeas.length > 0 && criticallyEvaluatedIdeas[0].overallScore !== undefined) {
+          console.log(`\n📊 First Business Idea Overall Score: ${criticallyEvaluatedIdeas[0].overallScore}/10`);
+          
+          loggingService.log({
+            level: 'INFO',
+            message: 'First idea Overall Score',
+            details: `Title: "${criticallyEvaluatedIdeas[0].title}", Score: ${criticallyEvaluatedIdeas[0].overallScore}/10`,
+          });
+        }
+
+        loggingService.log({
+          level: 'INFO',
+          message: 'Business Critic Agent finished successfully.',
+          details: `Critically evaluated ${criticalCount} business ideas.`,
+        });
+      }
+
+      // Step 4: Run Documentation Agent
+      let documentationResult = null;
+      
+      if (criticallyEvaluatedIdeas.length > 0) {
+        console.log('\n\n📝 Starting documentation generation...\n');
+        
+        loggingService.log({
+          level: 'INFO',
+          message: 'Starting Documentation Agent',
+          details: `Processing ${criticallyEvaluatedIdeas.length} business ideas for documentation`,
+        });
+
+        // Use test cache for documentation agent if enabled
+        documentationResult = await TestCacheService.loadOrExecute(
+          {
+            enabled: useTestCache,
+            fileName: 'documentation-output.json'
+          },
+          async () => {
+            console.log('\n🔷 Step 5: Documentation Agent');
+            console.log('📝 Generating comprehensive business idea report...\n');
+            
+            const generator = runDocumentationAgent({ ideas: criticallyEvaluatedIdeas });
+            let iterResult = await generator.next();
+            let result: DocumentationAgentOutput | null = null;
+            
+            while (!iterResult.done) {
+              const event = iterResult.value;
+              
+              switch (event.type) {
+                case 'status':
+                  console.log(`📋 ${event.data}`);
+                  break;
+                  
+                case 'chunk':
+                  // Don't display raw chunks from documentation agent
+                  break;
+                  
+                case 'idea-processed':
+                  console.log(`✅ Documented idea ${event.data.index}/${event.data.total}: ${event.data.title}`);
+                  break;
+                  
+                case 'section-generated':
+                  console.log(`📝 Generated section: ${event.data.section}`);
+                  break;
+                  
+                case 'complete':
+                  console.log('\n✅ Documentation generation complete!');
+                  break;
+              }
+              
+              iterResult = await generator.next();
+            }
+            
+            // When done, iterResult.value contains the return value
+            result = iterResult.value as DocumentationAgentOutput;
+            
+            console.log(`📄 Report saved to: ${result.reportPath}`);
+            console.log(`📊 Total ideas documented: ${result.ideasProcessed}`);
+            console.log(`⏱️  Processing time: ${result.processingTime}ms`);
+            
+            return result;
+          }
+        );
+
+        // Update output if loaded from cache
+        if (useTestCache && documentationResult) {
+          console.log(`\n📦 Loaded documentation result from cache`);
+          console.log(`📄 Report path: ${documentationResult.reportPath}`);
+          console.log(`📊 Ideas processed: ${documentationResult.ideasProcessed}`);
+        }
+
+        loggingService.log({
+          level: 'INFO',
+          message: 'Documentation Agent finished successfully.',
+          details: `Generated report at ${documentationResult.reportPath} with ${documentationResult.ideasProcessed} ideas.`,
         });
       }
 

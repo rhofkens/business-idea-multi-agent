@@ -46,6 +46,18 @@ export type CompetitorAgentOutput = BusinessIdea[];
 export type CriticAgentOutput = BusinessIdea[];
 
 /**
+ * Defines the output structure for the Documentation Agent.
+ */
+export interface DocumentationAgentOutput {
+  /** The path where the report was saved */
+  reportPath: string;
+  /** Total execution time in milliseconds */
+  processingTime: number;
+  /** Number of ideas in the report */
+  ideasProcessed: number;
+}
+
+/**
  * Defines the events that can be yielded by a streaming agent.
  */
 export type StreamEvent =
