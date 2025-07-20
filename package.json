@@ -12,7 +12,7 @@
   "scripts": {
     "start:core": "npm run start -w @business-idea/core",
     "start:web": "npm run dev -w @business-idea/web",
-    "build": "npm run build --workspaces",
+    "build": "npm run build -w @business-idea/shared && npm run build -w @business-idea/core && npm run build -w @business-idea/web",
     "build:core": "npm run build -w @business-idea/core",
     "build:web": "npm run build -w @business-idea/web",
     "lint": "npm run lint --workspaces",
