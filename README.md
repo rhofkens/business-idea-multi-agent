@@ -1,6 +1,49 @@
-# Business Idea Generator POC
+# Business Idea Generator
 
-This project is a Proof of Concept for a multi-agent AI system that generates and evaluates business ideas.
+A monorepo containing a multi-agent AI system that generates and evaluates business ideas, featuring a **modern web application with authentication** and a CLI tool for business idea generation.
+
+## 🏗️ Monorepo Structure
+
+This project is organized as a monorepo using npm workspaces:
+
+```
+business-idea-multi-agent/
+├── packages/
+│   ├── core/          # Backend server with authentication + AI agents
+│   ├── shared/        # Shared types and utilities
+│   └── web/           # React web application with authentication
+├── docs/              # Documentation and reports
+└── package.json       # Root workspace configuration
+```
+
+### Packages
+
+- **@business-idea/core**: Backend server with Fastify-based authentication system, plus AI agents and orchestration logic for business idea generation
+- **@business-idea/shared**: Shared TypeScript types, interfaces, and schemas used across packages
+- **@business-idea/web**: Modern React web application with authentication, session management, and user interface for the business idea generator
+
+## 🔐 Authentication System
+
+The application now features a complete authentication system:
+
+### Test Users
+
+For development and testing, use these pre-configured users:
+
+| Email | Password | Role |
+|-------|----------|------|
+| `admin@test.com` | `admin123` | Administrator |
+| `user@test.com` | `user123` | Regular User |
+| `guest@test.com` | `guest123` | Guest User |
+
+### Features
+
+- **Session-based authentication** with secure cookie management
+- **Password hashing** using bcrypt
+- **CORS configuration** for frontend-backend communication
+- **Protected routes** and authentication middleware
+- **In-memory user store** for development (easily replaceable with database)
+- **Comprehensive logging** and debug utilities
 
 ## How It Works
 
@@ -118,7 +161,7 @@ The generated reports follow this structure:
    cd business-idea-multi-agent
    ```
 
-3. **Install dependencies**:
+3. **Install dependencies** (this will install all workspace packages):
    ```bash
    npm install
    ```
@@ -129,19 +172,40 @@ The generated reports follow this structure:
    # Edit .env and add your OpenAI API key
    ```
 
-5. **Build the project**:
+5. **Build all packages**:
    ```bash
    npm run build
    ```
 
 ## Usage
 
-### Running the Complete System
+### 🚀 Quick Start (Recommended)
 
-To run the full multi-agent workflow:
+**Start the full application with authentication:**
+
+1. **Start the backend server** (in one terminal):
+   ```bash
+   cd packages/core && npm run dev:server
+   ```
+   This starts the Fastify authentication server on `http://localhost:3000`
+
+2. **Start the frontend** (in another terminal):
+   ```bash
+   cd packages/web && npm run dev
+   ```
+   This starts the React app on `http://localhost:5173`
+
+3. **Access the application**:
+   - Open `http://localhost:5173` in your browser
+   - Login with any test user (see Authentication System section above)
+   - You'll be redirected to the main application after successful login
+
+### CLI Application (Legacy Mode)
+
+To run the original multi-agent workflow via CLI (without web interface):
 
 ```bash
-npm run start
+cd packages/core && npm run start:cli
 ```
 
 This will:
@@ -150,14 +214,27 @@ This will:
 3. Critically evaluate each idea with risk assessment
 4. Generate a comprehensive markdown report in `docs/output/`
 
-### Command Line Options
+### Web Application (Production)
+
+To build and run the web application for production:
+
+```bash
+# Build all packages
+npm run build
+
+# Start backend server in production
+cd packages/core && npm run start:server
+
+# Serve frontend (you'll need a static file server)
+npm run build:web
+```
+
+### Command Line Options (CLI)
 
 ```bash
 # Run with test cache enabled (for development)
-npm run start -- --test-cache
+npm run start:core -- --test-cache
 ```
-
-**Note**: Individual agent execution is not currently supported via npm scripts. The system is designed to run as a complete chain through the orchestrator.
 
 ### Development Mode with Test Cache
 
@@ -165,7 +242,7 @@ The test cache feature helps speed up development by caching agent outputs:
 
 ```bash
 # Run with test cache enabled
-npm run start -- --test-cache
+npm run start:core -- --test-cache
 ```
 
 When enabled, the system will:
@@ -174,6 +251,45 @@ When enabled, the system will:
 - Display a message: "🧪 Test cache mode enabled"
 
 This is particularly useful during development to avoid waiting for AI responses when testing downstream agents.
+
+## Development
+
+### Monorepo Commands
+
+```bash
+# Install all dependencies
+npm install
+
+# Build all packages
+npm run build
+
+# Build specific package
+npm run build:core
+npm run build:shared
+npm run build:web
+
+# Run linting across all packages
+npm run lint
+
+# Development mode
+npm run dev:web    # Start web app dev server
+```
+
+### Working with Individual Packages
+
+Each package can be developed independently:
+
+```bash
+# Work on core package
+cd packages/core
+npm run build
+npm run lint
+
+# Work on web package
+cd packages/web
+npm run dev
+npm run build
+```
 
 ### Code Quality Commands
 
@@ -195,11 +311,34 @@ All generated reports are saved in the `docs/output/` directory with timestamped
 
 ### Environment Variables
 
-Create a `.env` file with the following:
+Create a `.env` file in the root directory with the following:
 
 ```env
+# Required for AI business idea generation
 OPENAI_API_KEY=your-api-key-here
+
+# Optional: Backend server configuration
+PORT=3000
+HOST=0.0.0.0
+
+# Optional: Session configuration
+SESSION_SECRET=your-secure-session-secret-here
 ```
+
+The core package will automatically load this configuration for both the authentication server and AI agents.
+
+### Backend Server Configuration
+
+The authentication server runs on:
+- **Default URL**: `http://localhost:3000`
+- **API Base**: `http://localhost:3000/api`
+- **Auth endpoints**: `http://localhost:3000/api/auth/*`
+
+Key endpoints:
+- `POST /api/auth/login` - User authentication
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/check` - Check authentication status
+- `GET /api/auth/me` - Get current user info
 
 ### Command Line Options
 
@@ -207,15 +346,44 @@ OPENAI_API_KEY=your-api-key-here
 
 Example:
 ```bash
-npm run start -- --test-cache
+npm run start:core -- --test-cache
 ```
 
 ## Architecture
 
-The project follows a deterministic multi-agent architecture:
-- Each agent has a specific responsibility and output format
-- Agents are orchestrated sequentially by the AgentOrchestrator
-- All inputs and outputs are validated using Zod schemas
-- Comprehensive logging is provided via CSV format
+The project follows a modular monorepo architecture:
+
+- **Separation of Concerns**: Core business logic is separated from UI and shared utilities
+- **Type Safety**: Shared types ensure consistency across packages
+- **Deterministic Agent Chain**: Each agent has a specific responsibility and output format
+- **Schema Validation**: All inputs and outputs are validated using Zod schemas
+- **Event Streaming**: Real-time progress updates during agent processing
+- **Comprehensive Logging**: Detailed logging in CSV format for debugging
+
+### Package Dependencies
+
+```
+@business-idea/web → @business-idea/shared
+@business-idea/core → @business-idea/shared
+```
 
 For detailed architecture information, see `docs/guidelines/architecture.md`.
+
+## Contributing
+
+This is a proof of concept project. For contributions:
+
+1. Follow the existing code structure and patterns
+2. Ensure all TypeScript types are properly defined
+3. Add appropriate validation using Zod schemas
+4. Update documentation as needed
+5. Run linting and type checking before submitting changes
+
+## Future Enhancements
+
+- API package for RESTful endpoints
+- Real-time WebSocket support for streaming updates
+- Database integration for idea persistence
+- User authentication and multi-tenancy
+- Enhanced web UI with visualization components
+- Mobile application support

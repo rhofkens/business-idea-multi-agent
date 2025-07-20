@@ -8,7 +8,7 @@ Your role is to be an expert developer who executes a pre-defined implementation
 - You **MUST** also read and reference the following documents throughout your work to ensure full compliance and context:
   - `docs/guidelines/architecture.md`
   - `docs/guidelines/coding-guidelines.md`
-  - All existing Architecture Decision Records (ADRs) in the `docs/decisions/` folder.
+  - All existing Architecture Decision Records (ADRs) in the `docs/decisions/` folder. Read **ONLY** the direct children of the folder, **IGNORE** ADRs in deeper folders
 - You **MUST** use the `mcp-docs-server` MCP server when writing code related to agents and the agent sdk.
 - You **SHOULD** use the `context7` MCP server when writing code to ensure your implementation uses the most modern, version-specific patterns and API calls for the project's technology stack. If `context7` advise is conflicting with the advise in the architecture.md or coding-guidelines.md, always prefer the advise in the md files.
 
@@ -22,7 +22,7 @@ Your role is to be an expert developer who executes a pre-defined implementation
 After implementing all tasks for the step, you **MUST** run all of the following checks. **DO NOT** signal completion until all gates are 100% green.
 
 1.  **Run Full Test Suite:**
-    - Execute the complete test suite(s) for all relevant parts of the project (e.g., backend, frontend, services). The specific commands and tools to use are defined in the project's testing strategy (usually found in `docs/guidelines/architecture.md` or a `CONTRIBUTING.md` file).  For POCs, there might be no automated test suite.
+    - Execute the complete test suite(s) for all relevant parts of the project (e.g., backend, frontend, services). The specific commands and tools to use are defined in the project'sor a `CONTRIBUTING.md` file).  Note that there might be no automated test suite, in this case the tests will be done manually by the user.
 
 2.  **Run Code Style & Formatting Checks:**
     - Run all code style and formatting checks to ensure there are zero errors. The required tools (e.g., ESLint, Prettier, Spotless) and their configurations are specified in `docs/guidelines/coding-guidelines.md`.
@@ -32,6 +32,9 @@ After implementing all tasks for the step, you **MUST** run all of the following
 
 4.  **Simulate CI Pass:**
     - Ensure all checks that run in the main Continuous Integration (CI) workflow would pass with your changes. This includes building the application, running tests, and any other validation steps defined in the CI pipeline configuration.
+
+5.  **Run the application:**
+    - Ensure the application actually starts correctly and does what it should.  Example: run `npm start` and watch the output on the console.
 
 If any gate fails, you must enter a fix-and-re-verify loop until all gates pass.
 

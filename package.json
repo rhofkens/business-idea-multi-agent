@@ -1,15 +1,21 @@
 {
   "name": "business-idea-multi-agent",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
-  "main": "index.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "start": "node --loader ts-node/esm src/main.ts",
-    "build": "tsc",
-    "lint": "eslint . --ext .ts",
+    "start:core": "npm run start -w @business-idea/core",
+    "start:web": "npm run dev -w @business-idea/web",
+    "build": "npm run build --workspaces",
+    "build:core": "npm run build -w @business-idea/core",
+    "build:web": "npm run build -w @business-idea/web",
+    "lint": "npm run lint --workspaces",
     "prepare": "husky"
   },
   "repository": {

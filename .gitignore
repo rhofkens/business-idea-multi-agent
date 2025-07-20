@@ -1,6 +1,6 @@
 # Dependencies
-/node_modules
-/dist
+node_modules/
+dist/
 
 # Env
 .env
@@ -9,6 +9,9 @@
 *.log
 logs/
 *.csv
+
+# Build outputs
+*.tsbuildinfo
 
 # IDE
 .vscode/

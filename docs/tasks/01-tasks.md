@@ -1,437 +1,316 @@
-# Sub-tasks for Step 1: Foundation and Deterministic Agent Chain
+# Task List: User Authentication & Session Management
 
-This document provides a detailed, sequential list of tasks for the implementation coder to complete Step 1. Follow each task in order.
+## Overview
+This task list details the implementation steps for the User Authentication & Session Management feature as defined in `docs/plans/01-user-authentication-session-management.md`. The implementation follows the architecture guidelines and ADR 001 (Fastify Session Plugin Choice).
 
-## Phase 1: Project Initialization and Setup
+## Prerequisites
+- Ensure the monorepo structure is set up with `@business-idea/core` and `@business-idea/web` packages
+- Node.js LTS (v22.x) installed
+- All dependencies from the root package.json installed
 
-### Task 1.1: Initialize Node.js Project
-- **Action**: Run `npm init -y` in the project root to create a `package.json` file.
+## Task List
 
-### Task 1.2: Install Development Dependencies
-- **Action**: Install all necessary development dependencies.
-- **Command**: 
-```bash
-npm install -D typescript @types/node ts-node nodemon eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier eslint-config-prettier eslint-plugin-prettier
-```
+### 1. Backend - Fastify Server Setup with Session Plugin
 
-### Task 1.3: Install Application Dependencies
-- **Action**: Install all core application dependencies. We are including `dotenv` for environment variable management and `zod` for robust type validation, which is a best practice seen in the OpenAI Agents SDK examples.
-- **Command**:
-```bash
-npm install @openai/agents zod dotenv
-```
+#### 1.1 Install Required Dependencies
+- [ ] In `packages/core`, install: `fastify`, `@fastify/session`, `@fastify/cookie`, `@fastify/cors`
+- [ ] Install security dependencies: `bcrypt`, `@types/bcrypt`
+- [ ] Install type definitions: `@types/node`
 
-### Task 1.4: Create Project Directory Structure
-- **Action**: Create the complete folder structure as defined in `docs/guidelines/architecture.md`.
-- **Command**:
-```bash
-mkdir -p src/agents src/orchestrator src/services src/types src/utils docs/output
-```
+#### 1.2 Create Fastify Server Instance
+- [ ] Create `packages/core/src/server/fastify-server.ts`
+- [ ] Initialize Fastify with logging enabled
+- [ ] Register `@fastify/cookie` plugin (required by session plugin)
+- [ ] Register `@fastify/session` plugin with in-memory store configuration:
+  - Cookie name: `sessionId`
+  - Cookie options: httpOnly: true, secure: false (dev), sameSite: 'lax'
+  - Secret: Read from environment variable `SESSION_SECRET`
+  - Session expiry: 30 minutes (1800000 ms)
+- [ ] Register `@fastify/cors` plugin with configuration:
+  - Origin: `http://localhost:5173` (React dev server)
+  - Credentials: true
 
-### Task 1.5: Configure TypeScript (`tsconfig.json`)
-- **Action**: Create a `tsconfig.json` file in the project root with strict type checking enabled.
-- **File**: `tsconfig.json`
-- **Content**:
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "CommonJS",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
-```
+#### 1.3 Environment Configuration
+- [ ] Update `.env.example` with:
+  - `SESSION_SECRET=your-super-secret-session-key-min-32-chars`
+  - `PORT=4000`
+  - `NODE_ENV=development`
+- [ ] Create `.env` file with actual values (ensure it's in .gitignore)
+- [ ] Update `packages/core/src/services/config-service.ts` to include session configuration
 
-### Task 1.6: Configure ESLint (`eslint.config.js`)
-- **Action**: Create an `eslint.config.js` file for code linting and formatting, integrating Prettier.
-- **File**: `eslint.config.js`
-- **Content**:
-```javascript
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import prettierConfig from 'eslint-config-prettier';
+### 2. Backend - In-Memory User Store
 
-export default tseslint.config(
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  prettierConfig,
-);
-```
+#### 2.1 Create User Types and Interfaces
+- [ ] Create `packages/shared/src/types/user.ts` with:
+  - `User` interface: { id: string, username: string, passwordHash: string, email: string, role: 'admin' | 'user' | 'guest' }
+  - `UserCredentials` interface: { username: string, password: string }
+  - Export these types from `packages/shared/src/types/index.ts`
 
-### Task 1.7: Create `.gitignore`
-- **Action**: Create a `.gitignore` file to exclude unnecessary files from version control.
-- **File**: `.gitignore`
-- **Content**:
-```
-# Dependencies
-/node_modules
-/dist
+#### 2.2 Implement In-Memory User Store
+- [ ] Create `packages/core/src/services/user-store.ts`
+- [ ] Implement singleton pattern for UserStore class
+- [ ] Create Map<string, User> for user storage
+- [ ] Add methods:
+  - `findByUsername(username: string): User | null`
+  - `findById(id: string): User | null`
+  - `validateCredentials(username: string, password: string): Promise<User | null>`
+- [ ] Initialize with test users:
+  - admin: { username: 'admin', password: 'admin123', email: 'admin@test.com', role: 'admin' }
+  - user: { username: 'user', password: 'user123', email: 'user@test.com', role: 'user' }
+  - guest: { username: 'guest', password: 'guest123', email: 'guest@test.com', role: 'guest' }
+- [ ] Hash all passwords using bcrypt with salt rounds of 10
 
-# Env
-.env
+### 3. Backend - Authentication API Endpoints
 
-# Logs
-*.log
-logs/
-*.csv
+#### 3.1 Create Authentication Schemas
+- [ ] Create `packages/core/src/schemas/auth-schemas.ts` using Zod:
+  - Login request schema: { username: string, password: string }
+  - Login response schema: { success: boolean, user?: UserInfo }
+  - Session response schema: { authenticated: boolean, user?: UserInfo }
+  - UserInfo type: { id: string, username: string, email: string, role: string }
 
-# IDE
-.vscode/
-```
+#### 3.2 Implement Authentication Routes
+- [ ] Create `packages/core/src/routes/auth-routes.ts`
+- [ ] Implement POST `/api/auth/login`:
+  - Validate request body against login schema
+  - Check credentials using UserStore
+  - Create session on success
+  - Store user info in session (exclude password hash)
+  - Return user info and success status
+  - Return 401 with error message on failure
+- [ ] Implement POST `/api/auth/logout`:
+  - Destroy session
+  - Clear session cookie
+  - Return success status
+- [ ] Implement GET `/api/auth/session`:
+  - Check if session exists and is valid
+  - Return user info if authenticated
+  - Return 401 if not authenticated
 
-### Task 1.8: Add `package.json` Scripts
-- **Action**: Add scripts for running, building, and linting the application to `package.json`.
-- **Note**: This will require editing the existing `package.json`.
-- **Content to add**:
-```json
-"scripts": {
-  "start": "ts-node src/main.ts",
-  "build": "tsc",
-  "lint": "eslint . --ext .ts"
-},
-```
+#### 3.3 Register Routes
+- [ ] Create `packages/core/src/routes/index.ts` to aggregate all routes
+- [ ] Register auth routes in the Fastify server
 
----
+### 4. Backend - Session Management Middleware
 
-## Phase 2: Core Services Implementation
+#### 4.1 Create Authentication Middleware
+- [ ] Create `packages/core/src/middleware/auth-middleware.ts`
+- [ ] Implement `requireAuth` hook:
+  - Check if session exists
+  - Validate session hasn't expired
+  - Add user to request context
+  - Return 401 if not authenticated
+- [ ] Implement `optionalAuth` hook:
+  - Same as requireAuth but doesn't return 401
+  - Sets `request.user` to null if not authenticated
 
-### Task 2.1: Implement Configuration Service
-- **Action**: Create the `config-service.ts` to safely load and expose environment variables. Also create a `.env.example` file.
-- **File**: `src/services/config-service.ts`
-- **Content**:
-```typescript
-import dotenv from 'dotenv';
+#### 4.2 Session Management Utilities
+- [ ] Create `packages/core/src/utils/session-utils.ts`
+- [ ] Implement session renewal logic (extend expiry on activity)
+- [ ] Implement session cleanup scheduler (runs every hour)
+- [ ] Add session logging for debugging
 
-dotenv.config();
+### 5. Backend - Server Integration
 
-/**
- * A service to manage application configuration and environment variables.
- */
-class ConfigService {
-  public readonly openAIApiKey: string;
+#### 5.1 Update Main Server Entry
+- [ ] Create `packages/core/src/server/index.ts` as the main server entry
+- [ ] Initialize Fastify server with all plugins and routes
+- [ ] Add graceful shutdown handling
+- [ ] Export server instance for testing
 
-  constructor() {
-    this.openAIApiKey = this.getEnvVariable('OPENAI_API_KEY');
-  }
+#### 5.2 Update Package Scripts
+- [ ] Update `packages/core/package.json` scripts:
+  - Add `"dev:server": "tsx watch src/server/index.ts"`
+  - Add `"build:server": "tsc"`
+  - Update main entry to point to server
 
-  private getEnvVariable(key: string): string {
-    const value = process.env[key];
-    if (!value) {
-      throw new Error(`Environment variable ${key} is not set.`);
-    }
-    return value;
-  }
-}
+### 6. Frontend - React Authentication Context
 
-export const configService = new ConfigService();
-```
-- **File**: `.env.example`
-- **Content**: `OPENAI_API_KEY="your_api_key_here"`
+#### 6.1 Create Authentication Types
+- [ ] Create `packages/web/src/types/auth.ts`:
+  - Import User types from @business-idea/shared
+  - Define AuthState interface
+  - Define AuthContextType interface
 
-### Task 2.2: Implement Logging Service
-- **Action**: Create `logging-service.ts` to handle CSV logging as per architecture guidelines.
-- **File**: `src/services/logging-service.ts`
-- **Content**:
-```typescript
-import * as fs from 'fs';
-import * as path from 'path';
+#### 6.2 Implement Auth Context and Provider
+- [ ] Create `packages/web/src/contexts/AuthContext.tsx`
+- [ ] Create AuthContext with default values
+- [ ] Implement AuthProvider component:
+  - State: user, isAuthenticated, isLoading
+  - Methods: login, logout, checkSession
+  - Use fetch API for backend communication
+  - Handle session persistence on mount
+  - Provide context value to children
 
-type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
+#### 6.3 Create useAuth Hook
+- [ ] Create `packages/web/src/hooks/useAuth.ts`
+- [ ] Export custom hook that uses AuthContext
+- [ ] Add error handling for missing provider
 
-interface LogEntry {
-  timestamp: string;
-  level: LogLevel;
-  message: string;
-  agent?: string;
-  details?: string;
-}
+### 7. Frontend - API Client Setup
 
-/**
- * A simple CSV logging service.
- */
-class LoggingService {
-  private logFilePath: string;
-  private readonly logHeaders = '"timestamp","level","message","agent","details"\\n';
+#### 7.1 Create API Client
+- [ ] Create `packages/web/src/lib/api-client.ts`
+- [ ] Configure base URL from environment
+- [ ] Set up fetch wrapper with:
+  - Credentials: 'include' for cookies
+  - Content-Type: 'application/json'
+  - Error handling
+  - Response parsing
 
-  constructor() {
-    const logDir = path.join(process.cwd(), 'logs');
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir);
-    }
-    this.logFilePath = path.join(logDir, `run_${new Date().toISOString().replace(/:/g, '-')}.csv`);
-    this.initializeLogFile();
-  }
+#### 7.2 Create Auth API Functions
+- [ ] Create `packages/web/src/api/auth.ts`
+- [ ] Implement:
+  - `login(credentials: UserCredentials): Promise<LoginResponse>`
+  - `logout(): Promise<void>`
+  - `getSession(): Promise<SessionResponse>`
 
-  private initializeLogFile() {
-    fs.writeFileSync(this.logFilePath, this.logHeaders, 'utf-8');
-  }
+### 8. Frontend - Login UI Component
 
-  private formatCsvRow(entry: LogEntry): string {
-    const { timestamp, level, message, agent = '', details = '' } = entry;
-    const cleanMessage = message.replace(/"/g, '""');
-    const cleanDetails = details.replace(/"/g, '""');
-    return `"${timestamp}","${level}","${cleanMessage}","${agent}","${cleanDetails}"\\n`;
-  }
+#### 8.1 Create Login Form Component
+- [ ] Create `packages/web/src/components/LoginForm.tsx`
+- [ ] Use shadcn/ui components:
+  - Card for container
+  - Input for username/password fields
+  - Button for submit
+  - Label for field labels
+- [ ] Implement form with:
+  - Controlled inputs for username and password
+  - Form validation (required fields)
+  - Loading state during submission
+  - Error message display
+  - onSuccess callback prop
 
-  public log(entry: Omit<LogEntry, 'timestamp'>) {
-    const fullEntry: LogEntry = {
-      ...entry,
-      timestamp: new Date().toISOString(),
-    };
-    const row = this.formatCsvRow(fullEntry);
-    fs.appendFileSync(this.logFilePath, row, 'utf-8');
-  }
-}
+#### 8.2 Create Protected Route Component
+- [ ] Create `packages/web/src/components/ProtectedRoute.tsx`
+- [ ] Check authentication status
+- [ ] Redirect to login if not authenticated
+- [ ] Show loading state while checking auth
+- [ ] Render children if authenticated
 
-export const loggingService = new LoggingService();
-```
+#### 8.3 Update App Layout
+- [ ] Update `packages/web/src/App.tsx`:
+  - Wrap app with AuthProvider
+  - Add login route
+  - Implement logout button in header when authenticated
+  - Show username when logged in
 
-### Task 2.3: Define Core Data Structures
-- **Action**: Create the type definitions for the core data structures of the application.
-- **File**: `src/types/business-idea.ts`
-- **Content**:
-```typescript
-/**
- * Defines the structure for user preferences for business idea generation.
- */
-export interface BusinessPreferences {
-  /** The industry vertical (e.g., "Media & Entertainment"). */
-  vertical: string;
-  /** A specific sub-category within the vertical. */
-  subVertical: string;
-  /** The desired business model (e.g., "B2B SaaS"). */
-  businessModel: string;
-}
+### 9. Testing Setup
 
-/**
- * Represents a single business idea with all its analyzed attributes.
- */
-export interface BusinessIdea {
-  title: string;
-  description: string;
-  businessModel: string;
-  disruptionPotential: number;
-  marketPotential: number;
-  technicalComplexity: number;
-  capitalIntensity: number;
-  blueOceanScore?: number;
-  overallScore?: number;
-  reasoning: {
-    disruption: string;
-    market: string;
-    technical: string;
-    capital: string;
-    blueOcean?: string;
-    overall?: string;
-  };
-  competitorAnalysis?: string;
-  criticalAnalysis?: string;
-}
-```
-- **File**: `src/types/agent-types.ts`
-- **Content**:
-```typescript
-import { BusinessIdea } from './business-idea';
+#### 9.1 Manual Testing Checklist
+- [ ] Create `docs/testing/auth-testing-checklist.md`
+- [ ] Include test scenarios:
+  - Login with valid credentials (all test users)
+  - Login with invalid credentials
+  - Session persistence across page refresh
+  - Logout functionality
+  - Protected route access
+  - Session timeout behavior
+  - Concurrent session handling
 
-/**
- * Defines the output structure for the Ideation Agent.
- */
-export type IdeationAgentOutput = BusinessIdea[];
+#### 9.2 Development Testing Utilities
+- [ ] Create `packages/core/src/utils/test-auth.ts`
+- [ ] Add helper to create test sessions
+- [ ] Add helper to clear all sessions
+- [ ] Add session debugging endpoints (dev only)
 
-/**
- * Defines the output structure for the Competitor Agent.
- */
-export type CompetitorAgentOutput = BusinessIdea[];
+### 10. CI/CD Configuration Updates
 
-/**
- * Defines the output structure for the Business Critic Agent.
- */
-export type CriticAgentOutput = BusinessIdea[];
-```
-- **File**: `src/utils/errors.ts`
-- **Content**:
-```typescript
-/**
- * Custom error class for agent-related failures.
- */
-export class AgentError extends Error {
-  constructor(message: string, public readonly agentName: string) {
-    super(`[${agentName}] ${message}`);
-    this.name = 'AgentError';
-  }
-}
-```
+#### 10.1 GitHub Actions Workflow
+- [ ] Update `.github/workflows/ci.yml` to support monorepo structure:
+  - Add workspace caching strategy for npm dependencies
+  - Configure matrix build for multiple packages
+  - Update install command to use npm workspaces
+  - Add separate build steps for each package:
+    - Build @business-idea/shared first (dependency)
+    - Build @business-idea/core (depends on shared)
+    - Build @business-idea/web (depends on both shared and core)
+  - Update lint command to run across all packages
+  - Add environment variables for monorepo paths
+  - Ensure proper build order based on package dependencies
+  - Add job dependencies to enforce build order
 
----
+#### 10.2 CI Environment Configuration
+- [ ] Add Node.js workspace configuration checks
+- [ ] Ensure npm version supports workspaces (npm 7+)
+- [ ] Add package-specific build status badges
+- [ ] Configure build artifacts for web package deployment
 
-## Phase 3: Agent and Orchestrator Implementation
+### 11. Documentation
 
-### Task 3.1: Create Agent Implementations
-- **Action**: Create the basic agent files. For this initial step, they will have a simple "acknowledgement" prompt.
-- **File**: `src/agents/ideation-agent.ts`
-- **Content**:
-```typescript
-import { Agent } from '@openai/agents';
+#### 11.1 API Documentation
+- [ ] Create `docs/api/authentication.md` with:
+  - Endpoint specifications (request/response formats)
+  - Authentication flow diagram (using mermaid)
+  - Session management details
+  - Example cURL commands for each endpoint
 
-export const ideationAgent = new Agent({
-  name: 'Ideation Agent',
-  instructions: 'You are the Ideation Agent. Acknowledge this and wait for the next instruction.',
-  model: 'gpt-4o',
-});
-```
-- **File**: `src/agents/competitor-agent.ts`
-- **Content**:
-```typescript
-import { Agent } from '@openai/agents';
+#### 11.2 Comprehensive Authentication Guide
+- [ ] Create `docs/guides/authentication-implementation.md` with:
+  - **Backend Implementation**
+    - Fastify session plugin configuration details
+    - Required environment variables
+    - CORS setup for local development
+    - Session configuration options explained
+    - Troubleshooting common backend issues
+  - **Frontend Implementation**
+    - AuthContext usage examples
+    - Protected route implementation guide
+    - useAuth hook API documentation
+    - LoginForm component props and usage
+  - **Security Considerations**
+    - Session security best practices implemented
+    - Production deployment considerations
+    - httpOnly cookie configuration
+    - Password hashing with bcrypt
+  - **Development and Testing**
+    - Local development setup guide
+    - Manual testing procedures
+    - Common issues and solutions
+  - **Future Enhancements**
+    - Redis session store migration path
+    - Database-backed user authentication
+    - JWT token consideration
 
-export const competitorAgent = new Agent({
-  name: 'Competitor Analysis Agent',
-  instructions: 'You are the Competitor Analysis Agent. Acknowledge this and wait for the next instruction.',
-  model: 'gpt-4o',
-});
-```
-- **File**: `src/agents/critic-agent.ts`
-- **Content**:
-```typescript
-import { Agent } from '@openai/agents';
+#### 11.3 Code Comments
+- [ ] Add JSDoc comments to all authentication functions
+- [ ] Document session configuration options in code
+- [ ] Add inline comments explaining security decisions
+- [ ] Document test user credentials in code
 
-export const criticAgent = new Agent({
-  name: 'Business Critic Agent',
-  instructions: 'You are the Business Critic Agent. Acknowledge this and wait for the next instruction.',
-  model: 'gpt-4o',
-});
-```
-- **File**: `src/agents/documentation-agent.ts`
-- **Content**:
-```typescript
-import { Agent } from '@openai/agents';
+### 12. Integration Verification
 
-export const documentationAgent = new Agent({
-  name: 'Documentation Agent',
-  instructions: 'You are the Documentation Agent. Acknowledge this and report that the process is complete.',
-  model: 'gpt-4o',
-});
-```
+#### 12.1 End-to-End Flow Testing
+- [ ] Start backend server
+- [ ] Start frontend dev server
+- [ ] Verify login flow works completely
+- [ ] Verify session sharing between HTTP and future WebSocket
+- [ ] Test all error scenarios
 
-### Task 3.2: Implement the Agent Orchestrator
-- **Action**: Create the `agent-orchestrator.ts` to manage the sequential execution of the agents.
-- **File**: `src/orchestrator/agent-orchestrator.ts`
-- **Content**:
-```typescript
-import { run } from '@openai/agents';
-import { ideationAgent } from '../agents/ideation-agent';
-import { competitorAgent } from '../agents/competitor-agent';
-import { criticAgent } from '../agents/critic-agent';
-import { documentationAgent } from '../agents/documentation-agent';
-import { loggingService } from '../services/logging-service';
+#### 12.2 Configuration Verification
+- [ ] Ensure all environment variables are documented
+- [ ] Verify CORS settings work correctly
+- [ ] Test session timeout behavior
+- [ ] Verify secure cookie settings for production
 
-/**
- * Orchestrates the sequential execution of the agent chain.
- */
-export class AgentOrchestrator {
-  public async runChain(): Promise<string> {
-    let currentInput = 'Start';
-    let finalOutput = '';
+## Completion Checklist
 
-    const agents = [ideationAgent, competitorAgent, criticAgent, documentationAgent];
+Before marking this increment as complete, ensure:
+- [ ] All test users can log in successfully
+- [ ] Sessions persist across page refreshes
+- [ ] Logout clears session properly
+- [ ] Protected routes redirect when not authenticated
+- [ ] All API endpoints return correct status codes
+- [ ] Session timeout works as configured (30 minutes)
+- [ ] All documentation tasks are complete
+- [ ] Code follows TypeScript strict mode
+- [ ] No ESLint errors
+- [ ] Manual testing checklist is complete
 
-    for (const agent of agents) {
-      loggingService.log({ level: 'INFO', message: `Starting agent: ${agent.name}` });
-      try {
-        const result = await run(agent, currentInput);
-        const output = result.finalOutput as string;
+## Notes
 
-        loggingService.log({
-          level: 'INFO',
-          message: `Agent ${agent.name} finished.`,
-          agent: agent.name,
-          details: `Output: ${output.substring(0, 50)}...`
-        });
-
-        currentInput = output; // Pass the output of one agent as the input to the next
-        finalOutput += `${agent.name} acknowledged. -> `;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        loggingService.log({
-          level: 'ERROR',
-          message: `Agent ${agent.name} failed.`,
-          agent: agent.name,
-          details: errorMessage,
-        });
-        throw new Error(`Execution failed at agent: ${agent.name}`);
-      }
-    }
-    
-    // Clean up the final output string
-    finalOutput = finalOutput.slice(0, -4);
-    
-    return finalOutput;
-  }
-}
-```
-
----
-
-## Phase 4: Application Entry Point and Documentation
-
-### Task 4.1: Create CLI Entry Point
-- **Action**: Create the `main.ts` file to instantiate the orchestrator and run the agent chain.
-- **File**: `src/main.ts`
-- **Content**:
-```typescript
-import { configService } from './services/config-service';
-import { loggingService } from './services/logging-service';
-import { AgentOrchestrator } from './orchestrator/agent-orchestrator';
-
-async function main() {
-  loggingService.log({ level: 'INFO', message: 'Application starting.' });
-  
-  // Verify API key is loaded
-  if (!configService.openAIApiKey) {
-    loggingService.log({ level: 'ERROR', message: 'OpenAI API key is missing. Shutting down.' });
-    process.exit(1);
-  }
-
-  const orchestrator = new AgentOrchestrator();
-
-  try {
-    const finalResult = await orchestrator.runChain();
-    console.log('Agent chain executed successfully.');
-    console.log('Final Output:', finalResult);
-    loggingService.log({ level: 'INFO', message: 'Application finished successfully.', details: `Final output: ${finalResult}` });
-    process.exit(0);
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during orchestration.';
-    console.error(errorMessage);
-    loggingService.log({ level: 'ERROR', message: 'Application failed during execution.', details: errorMessage });
-    process.exit(1);
-  }
-}
-
-main();
-```
-
-### Task 4.2: Create Initial `README.md`
-- **Action**: Create a basic `README.md` file at the project root.
-- **File**: `README.md`
-- **Content**:
-```markdown
-# Business Idea Generator POC
-
-This project is a Proof of Concept for a multi-agent AI system that generates and evaluates business ideas.
-
-## Installation
-
-(Instructions to be added in a future increment.)
-
-## Usage
-
-(Instructions to be added in a future increment.)
+- This implementation uses in-memory storage for Phase 1. Sessions will be lost on server restart.
+- The session secret must be at least 32 characters for security.
+- Passwords are hashed using bcrypt with 10 salt rounds.
+- CORS is configured for local development only; production will need different settings.
+- All sensitive operations should log for debugging purposes in development mode.

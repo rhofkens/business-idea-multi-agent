@@ -5,7 +5,18 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ["dist/"],
+    ignores: [
+      "dist/",
+      "**/dist/",
+      "packages/*/dist/",
+      "node_modules/",
+      "**/node_modules/",
+      "coverage/",
+      "**/coverage/",
+      ".turbo/",
+      "**/.turbo/",
+      "**/tsconfig.tsbuildinfo"
+    ],
   },
   {
     languageOptions: {

@@ -9,7 +9,7 @@ Your primary inputs, which you **MUST** read and fully understand before proceed
 - The specific step plan file for the current increment (e.g., `docs/plans/0X-some-feature.md`).
 - `docs/guidelines/architecture.md`
 - `docs/guidelines/coding-guidelines.md`
-- All existing Architecture Decision Records (ADRs) from the `docs/decisions/` folder.
+- All existing Architecture Decision Records (ADRs) from the `docs/decisions/` folder. Read **ONLY** the direct children of the folder, **IGNORE** ADRs in deeper folders
 - You **MUST** use the `mcp-docs-server` MCP server when writing code related to agents and the agent sdk.
 - You **SHOULD** use the `context7` MCP server when writing code to ensure your implementation uses the most modern, version-specific patterns and API calls for the project's technology stack. If `context7` advise is conflicting with the advise in the architecture.md or coding-guidelines.md, always prefer the advise in the md files.
 

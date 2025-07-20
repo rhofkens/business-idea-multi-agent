@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional Business Intelligence Design System */
+
+@layer base {
+  :root {
+    /* Base Colors */
+    --background: 240 10% 97%;
+    --foreground: 240 10% 10%;
+
+    /* Surface Colors */
+    --card: 240 10% 99%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 240 10% 99%;
+    --popover-foreground: 240 10% 10%;
+
+    /* Brand Colors - Professional Blue-Purple Gradient */
+    --primary: 237 84% 55%;
+    --primary-foreground: 240 10% 98%;
+    --primary-glow: 250 89% 65%;
+
+    --secondary: 240 5% 94%;
+    --secondary-foreground: 240 10% 20%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 5% 45%;
+
+    --accent: 250 89% 65%;
+    --accent-foreground: 240 10% 98%;
+
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 142 76% 98%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 10%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 84% 98%;
+
+    /* Agent Colors */
+    --agent-ideation: 270 100% 70%;
+    --agent-competitor: 220 100% 65%;
+    --agent-critic: 30 100% 60%;
+    --agent-documentation: 150 60% 50%;
+
+    /* Score Colors */
+    --score-low: 0 84% 60%;
+    --score-medium: 38 92% 50%;
+    --score-high: 142 76% 36%;
+
+    /* Surface & Interactive */
+    --border: 240 6% 90%;
+    --input: 240 6% 95%;
+    --ring: 237 84% 55%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-agent: linear-gradient(90deg, hsl(var(--agent-ideation)), hsl(var(--agent-competitor)));
+
+    /* Shadows */
+    --shadow-elegant: 0 4px 20px -4px hsl(var(--primary) / 0.15);
+    --shadow-glow: 0 0 30px hsl(var(--primary-glow) / 0.3);
+    --shadow-terminal: inset 0 2px 4px hsl(0 0% 0% / 0.1);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease-out;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Base Colors - Dark */
+    --background: 240 10% 8%;
+    --foreground: 240 10% 95%;
+
+    /* Surface Colors - Dark */
+    --card: 240 10% 10%;
+    --card-foreground: 240 10% 95%;
+
+    --popover: 240 10% 10%;
+    --popover-foreground: 240 10% 95%;
+
+    /* Brand Colors - Dark Mode */
+    --primary: 250 89% 65%;
+    --primary-foreground: 240 10% 10%;
+    --primary-glow: 237 84% 55%;
+
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 240 10% 90%;
+
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 237 84% 55%;
+    --accent-foreground: 240 10% 95%;
+
+    /* Status Colors - Dark */
+    --success: 142 76% 45%;
+    --success-foreground: 142 76% 10%;
+    
+    --warning: 38 92% 60%;
+    --warning-foreground: 38 92% 10%;
+    
+    --destructive: 0 84% 70%;
+    --destructive-foreground: 0 84% 10%;
+
+    /* Agent Colors - Dark */
+    --agent-ideation: 270 100% 75%;
+    --agent-competitor: 220 100% 70%;
+    --agent-critic: 30 100% 65%;
+    --agent-documentation: 150 60% 55%;
+
+    /* Score Colors - Dark */
+    --score-low: 0 84% 70%;
+    --score-medium: 38 92% 60%;
+    --score-high: 142 76% 45%;
+
+    /* Surface & Interactive - Dark */
+    --border: 240 6% 20%;
+    --input: 240 6% 15%;
+    --ring: 250 89% 65%;
+
+    /* Gradients - Dark */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-agent: linear-gradient(90deg, hsl(var(--agent-ideation)), hsl(var(--agent-competitor)));
+
+    /* Shadows - Dark */
+    --shadow-elegant: 0 4px 20px -4px hsl(var(--primary) / 0.25);
+    --shadow-glow: 0 0 30px hsl(var(--primary-glow) / 0.4);
+    --shadow-terminal: inset 0 2px 4px hsl(0 0% 0% / 0.3);
+
+    /* Sidebar - Dark */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

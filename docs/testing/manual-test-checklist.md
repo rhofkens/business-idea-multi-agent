@@ -7,8 +7,96 @@ This checklist guides through manual testing of the business idea multi-agent sy
 - [ ] Node.js 18.x or later installed
 - [ ] OpenAI API key set in `.env` file
 - [ ] All dependencies installed (`npm install`)
+- [ ] Workspace packages built (`npm run build` from root)
 
 ## Test Scenarios
+
+### Web Application Authentication Tests
+
+#### A. Server Startup and Configuration
+
+- [ ] Start the web server with `npm run start:web`
+- [ ] Verify server starts on port 3000
+- [ ] Confirm session configuration is loaded correctly
+- [ ] Check CORS is enabled for frontend origin (http://localhost:5173)
+
+#### B. Authentication Endpoints
+
+##### Login Endpoint (/api/auth/login)
+- [ ] Test valid login with admin@test.com / password123
+  - [ ] Returns 200 status
+  - [ ] Response includes user object with id, email, role
+  - [ ] Session cookie is set (fastify-session)
+- [ ] Test valid login with user@test.com / password123
+- [ ] Test valid login with guest@test.com / password123
+- [ ] Test invalid email format
+  - [ ] Returns 400 status with validation error
+- [ ] Test non-existent user
+  - [ ] Returns 401 status with "Invalid credentials"
+- [ ] Test incorrect password
+  - [ ] Returns 401 status with "Invalid credentials"
+
+##### User Endpoint (/api/auth/user)
+- [ ] Test with valid session
+  - [ ] Returns 200 status with user data
+- [ ] Test without session
+  - [ ] Returns 401 status with "Not authenticated"
+
+##### Check Endpoint (/api/auth/check)
+- [ ] Test with valid session
+  - [ ] Returns { authenticated: true, user: {...} }
+- [ ] Test without session
+  - [ ] Returns { authenticated: false }
+
+##### Logout Endpoint (/api/auth/logout)
+- [ ] Test logout with active session
+  - [ ] Returns 200 status with success message
+  - [ ] Session is destroyed
+  - [ ] Subsequent auth checks return unauthenticated
+
+#### C. Session Management
+
+- [ ] Verify session expires after 30 minutes of inactivity
+- [ ] Verify rolling sessions (activity extends expiry)
+- [ ] Test concurrent sessions (multiple logins)
+- [ ] Verify httpOnly cookie settings
+
+#### D. Frontend Authentication Flow
+
+##### Login Page
+- [ ] Navigate to http://localhost:5173/login
+- [ ] Verify login form displays correctly
+- [ ] Test form validation:
+  - [ ] Empty email shows "Email is required"
+  - [ ] Invalid email shows "Invalid email address"
+  - [ ] Empty password shows "Password is required"
+- [ ] Test successful login:
+  - [ ] Enter admin@test.com / password123
+  - [ ] Click login button
+  - [ ] Verify redirect to home page
+  - [ ] User info displays correctly
+
+##### Protected Routes
+- [ ] Try accessing home page without login
+  - [ ] Redirects to login page
+- [ ] Login and verify access to protected routes
+- [ ] Test role-based access (if implemented)
+
+##### Logout Flow
+- [ ] Click logout button
+- [ ] Verify redirect to login page
+- [ ] Confirm session is cleared
+- [ ] Try accessing protected route after logout
+
+#### E. Error Handling and Edge Cases
+
+- [ ] Test server restart with active sessions
+- [ ] Test API calls with expired sessions
+- [ ] Test network errors during login
+- [ ] Test simultaneous login attempts
+- [ ] Verify XSS protection on login form
+
+### CLI Application Tests (Original)
 
 ### 1. Basic Execution Test
 

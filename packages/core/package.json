@@ -1,0 +1,39 @@
+{
+  "name": "@business-idea/core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "start:cli": "tsx src/main.ts",
+    "start:server": "tsx src/server.ts",
+    "build": "tsc",
+    "dev": "nodemon --exec tsx src/main.ts",
+    "dev:cli": "nodemon --exec tsx src/main.ts",
+    "dev:server": "nodemon --exec tsx src/server.ts",
+    "lint": "eslint . --ext .ts",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"No tests configured yet\""
+  },
+  "dependencies": {
+    "@business-idea/shared": "^1.0.0",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.0.1",
+    "@fastify/session": "^11.1.0",
+    "@openai/agents": "^0.0.10",
+    "@sinclair/typebox": "^0.34.38",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.1.0",
+    "fastify": "^5.4.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}
