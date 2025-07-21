@@ -8,6 +8,8 @@ export interface BusinessPreferences {
   subVertical: string;
   /** The desired business model (e.g., "B2B SaaS"). */
   businessModel: string;
+  /** Additional context or constraints provided by the user. */
+  additionalContext?: string;
 }
 
 /**

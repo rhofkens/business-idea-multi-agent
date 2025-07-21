@@ -19,6 +19,15 @@
         "search_docs",
         "find_version",
         "fetch_url"
+      ],
+      "disabledTools": [
+        "fetch_url",
+        "remove_docs",
+        "cancel_job",
+        "get_job_info",
+        "list_jobs",
+        "find_version",
+        "scrape_docs"
       ]
     }
   }

@@ -1,0 +1,860 @@
+{
+  "version": "1.0.0",
+  "verticals": [
+    {
+      "id": "technology-software",
+      "name": "Technology & Software",
+      "description": "Technology and software development sectors including enterprise software, consumer applications, and developer tools",
+      "subverticals": [
+        {
+          "id": "saas-b2b",
+          "name": "SaaS (B2B)",
+          "examples": ["CRM systems", "project management tools", "HR software"]
+        },
+        {
+          "id": "saas-b2c",
+          "name": "SaaS (B2C)",
+          "examples": ["subscription services", "productivity apps", "cloud storage"]
+        },
+        {
+          "id": "mobile-apps",
+          "name": "Mobile Apps",
+          "examples": ["iOS apps", "Android apps", "cross-platform apps"]
+        },
+        {
+          "id": "ai-ml",
+          "name": "AI/ML",
+          "examples": ["machine learning platforms", "AI assistants", "computer vision"]
+        },
+        {
+          "id": "cybersecurity",
+          "name": "Cybersecurity",
+          "examples": ["threat detection", "identity management", "encryption tools"]
+        },
+        {
+          "id": "dev-tools",
+          "name": "Dev Tools",
+          "examples": ["IDEs", "CI/CD platforms", "testing frameworks"]
+        },
+        {
+          "id": "blockchain",
+          "name": "Blockchain",
+          "examples": ["smart contracts", "decentralized apps", "crypto wallets"]
+        },
+        {
+          "id": "iot",
+          "name": "IoT",
+          "examples": ["smart home devices", "industrial IoT", "wearables"]
+        },
+        {
+          "id": "ar-vr",
+          "name": "AR/VR",
+          "examples": ["virtual reality games", "AR applications", "metaverse platforms"]
+        },
+        {
+          "id": "quantum-computing",
+          "name": "Quantum Computing",
+          "examples": ["quantum algorithms", "quantum simulators", "quantum cloud services"]
+        }
+      ]
+    },
+    {
+      "id": "healthcare-life-sciences",
+      "name": "Healthcare & Life Sciences",
+      "description": "Healthcare services, medical technology, biotechnology, and pharmaceutical industries",
+      "subverticals": [
+        {
+          "id": "telemedicine",
+          "name": "Telemedicine",
+          "examples": ["virtual consultations", "remote patient monitoring", "digital health platforms"]
+        },
+        {
+          "id": "health-tech",
+          "name": "Health Tech",
+          "examples": ["health tracking apps", "medical devices", "health data analytics"]
+        },
+        {
+          "id": "biotech",
+          "name": "Biotech",
+          "examples": ["gene therapy", "drug discovery", "synthetic biology"]
+        },
+        {
+          "id": "medical-devices",
+          "name": "Medical Devices",
+          "examples": ["diagnostic equipment", "surgical instruments", "implantable devices"]
+        },
+        {
+          "id": "pharmaceuticals",
+          "name": "Pharmaceuticals",
+          "examples": ["drug development", "clinical trials", "medication delivery systems"]
+        },
+        {
+          "id": "mental-health",
+          "name": "Mental Health",
+          "examples": ["therapy apps", "mental wellness platforms", "digital therapeutics"]
+        },
+        {
+          "id": "fitness-wellness",
+          "name": "Fitness & Wellness",
+          "examples": ["fitness tracking", "nutrition apps", "wellness programs"]
+        },
+        {
+          "id": "elder-care",
+          "name": "Elder Care",
+          "examples": ["senior living technology", "caregiving platforms", "aging-in-place solutions"]
+        },
+        {
+          "id": "health-insurance",
+          "name": "Health Insurance",
+          "examples": ["insurance tech platforms", "claims processing", "benefit management"]
+        },
+        {
+          "id": "clinical-research",
+          "name": "Clinical Research",
+          "examples": ["trial management", "patient recruitment", "research data platforms"]
+        }
+      ]
+    },
+    {
+      "id": "financial-services",
+      "name": "Financial Services",
+      "description": "Banking, insurance, investment services, and financial technology innovations",
+      "subverticals": [
+        {
+          "id": "banking",
+          "name": "Banking",
+          "examples": ["digital banking", "neo-banks", "banking infrastructure"]
+        },
+        {
+          "id": "payments",
+          "name": "Payments",
+          "examples": ["payment processing", "digital wallets", "cross-border payments"]
+        },
+        {
+          "id": "lending",
+          "name": "Lending",
+          "examples": ["peer-to-peer lending", "business loans", "mortgage platforms"]
+        },
+        {
+          "id": "investment",
+          "name": "Investment",
+          "examples": ["robo-advisors", "trading platforms", "portfolio management"]
+        },
+        {
+          "id": "insurance-tech",
+          "name": "Insurance Tech",
+          "examples": ["insurtech platforms", "claims automation", "risk assessment"]
+        },
+        {
+          "id": "cryptocurrency",
+          "name": "Cryptocurrency",
+          "examples": ["crypto exchanges", "DeFi platforms", "stablecoins"]
+        },
+        {
+          "id": "regtech",
+          "name": "RegTech",
+          "examples": ["compliance automation", "KYC/AML solutions", "regulatory reporting"]
+        },
+        {
+          "id": "personal-finance",
+          "name": "Personal Finance",
+          "examples": ["budgeting apps", "expense tracking", "financial planning"]
+        },
+        {
+          "id": "wealth-management",
+          "name": "Wealth Management",
+          "examples": ["wealth tech platforms", "estate planning", "tax optimization"]
+        },
+        {
+          "id": "accounting",
+          "name": "Accounting",
+          "examples": ["bookkeeping software", "tax preparation", "financial reporting"]
+        }
+      ]
+    },
+    {
+      "id": "education-edtech",
+      "name": "Education & EdTech",
+      "description": "Educational technology, online learning platforms, and academic services",
+      "subverticals": [
+        {
+          "id": "online-learning",
+          "name": "Online Learning",
+          "examples": ["MOOCs", "video courses", "live online classes"]
+        },
+        {
+          "id": "k12-education",
+          "name": "K-12 Education",
+          "examples": ["school management systems", "educational games", "parent-teacher platforms"]
+        },
+        {
+          "id": "higher-education",
+          "name": "Higher Education",
+          "examples": ["university platforms", "student management", "campus technology"]
+        },
+        {
+          "id": "corporate-training",
+          "name": "Corporate Training",
+          "examples": ["employee training platforms", "skill development", "certification programs"]
+        },
+        {
+          "id": "language-learning",
+          "name": "Language Learning",
+          "examples": ["language apps", "conversation practice", "translation tools"]
+        },
+        {
+          "id": "test-prep",
+          "name": "Test Prep",
+          "examples": ["exam preparation", "practice tests", "tutoring platforms"]
+        },
+        {
+          "id": "stem-education",
+          "name": "STEM Education",
+          "examples": ["coding bootcamps", "science simulations", "math learning apps"]
+        },
+        {
+          "id": "educational-content",
+          "name": "Educational Content",
+          "examples": ["digital textbooks", "educational videos", "interactive content"]
+        },
+        {
+          "id": "tutoring-mentoring",
+          "name": "Tutoring & Mentoring",
+          "examples": ["online tutoring", "peer learning", "mentorship platforms"]
+        },
+        {
+          "id": "education-management",
+          "name": "Education Management",
+          "examples": ["learning management systems", "student information systems", "assessment tools"]
+        }
+      ]
+    },
+    {
+      "id": "retail-ecommerce",
+      "name": "Retail & E-commerce",
+      "description": "Online and offline retail, marketplace platforms, and commerce infrastructure",
+      "subverticals": [
+        {
+          "id": "online-marketplaces",
+          "name": "Online Marketplaces",
+          "examples": ["multi-vendor platforms", "niche marketplaces", "B2B marketplaces"]
+        },
+        {
+          "id": "dtc-brands",
+          "name": "D2C Brands",
+          "examples": ["direct-to-consumer brands", "subscription boxes", "personalized products"]
+        },
+        {
+          "id": "social-commerce",
+          "name": "Social Commerce",
+          "examples": ["live shopping", "social media stores", "influencer commerce"]
+        },
+        {
+          "id": "grocery-delivery",
+          "name": "Grocery Delivery",
+          "examples": ["online grocery", "meal kit delivery", "instant delivery"]
+        },
+        {
+          "id": "fashion-tech",
+          "name": "Fashion Tech",
+          "examples": ["virtual try-on", "fashion marketplaces", "sustainable fashion"]
+        },
+        {
+          "id": "retail-tech",
+          "name": "Retail Tech",
+          "examples": ["POS systems", "inventory management", "customer analytics"]
+        },
+        {
+          "id": "subscription-commerce",
+          "name": "Subscription Commerce",
+          "examples": ["subscription services", "membership programs", "recurring delivery"]
+        },
+        {
+          "id": "recommerce",
+          "name": "Recommerce",
+          "examples": ["resale platforms", "refurbished goods", "circular economy"]
+        },
+        {
+          "id": "b2b-commerce",
+          "name": "B2B Commerce",
+          "examples": ["wholesale platforms", "procurement systems", "B2B marketplaces"]
+        },
+        {
+          "id": "omnichannel-retail",
+          "name": "Omnichannel Retail",
+          "examples": ["unified commerce", "click-and-collect", "channel integration"]
+        }
+      ]
+    },
+    {
+      "id": "real-estate-proptech",
+      "name": "Real Estate & PropTech",
+      "description": "Property technology, real estate services, and construction technology",
+      "subverticals": [
+        {
+          "id": "property-management",
+          "name": "Property Management",
+          "examples": ["rental management", "maintenance platforms", "tenant services"]
+        },
+        {
+          "id": "real-estate-marketplaces",
+          "name": "Real Estate Marketplaces",
+          "examples": ["property listings", "home buying platforms", "commercial real estate"]
+        },
+        {
+          "id": "short-term-rentals",
+          "name": "Short-term Rentals",
+          "examples": ["vacation rentals", "corporate housing", "rental management"]
+        },
+        {
+          "id": "real-estate-fintech",
+          "name": "Real Estate FinTech",
+          "examples": ["property investment", "crowdfunding", "mortgage tech"]
+        },
+        {
+          "id": "construction-tech",
+          "name": "Construction Tech",
+          "examples": ["project management", "building information modeling", "construction robotics"]
+        },
+        {
+          "id": "smart-buildings",
+          "name": "Smart Buildings",
+          "examples": ["building automation", "energy management", "IoT integration"]
+        },
+        {
+          "id": "co-living-coworking",
+          "name": "Co-living & Co-working",
+          "examples": ["shared living spaces", "flexible workspaces", "community platforms"]
+        },
+        {
+          "id": "property-data",
+          "name": "Property Data",
+          "examples": ["real estate analytics", "market data", "valuation tools"]
+        },
+        {
+          "id": "virtual-tours",
+          "name": "Virtual Tours",
+          "examples": ["3D property tours", "virtual staging", "AR visualization"]
+        },
+        {
+          "id": "facilities-management",
+          "name": "Facilities Management",
+          "examples": ["workplace management", "asset tracking", "space optimization"]
+        }
+      ]
+    },
+    {
+      "id": "transportation-mobility",
+      "name": "Transportation & Mobility",
+      "description": "Transportation services, logistics, autonomous vehicles, and mobility solutions",
+      "subverticals": [
+        {
+          "id": "ride-sharing",
+          "name": "Ride-sharing",
+          "examples": ["peer-to-peer rides", "carpooling", "ride-hailing"]
+        },
+        {
+          "id": "autonomous-vehicles",
+          "name": "Autonomous Vehicles",
+          "examples": ["self-driving cars", "autonomous trucks", "robotaxis"]
+        },
+        {
+          "id": "electric-vehicles",
+          "name": "Electric Vehicles",
+          "examples": ["EV manufacturing", "charging infrastructure", "battery technology"]
+        },
+        {
+          "id": "micro-mobility",
+          "name": "Micro-mobility",
+          "examples": ["e-scooters", "bike-sharing", "e-bikes"]
+        },
+        {
+          "id": "logistics-delivery",
+          "name": "Logistics & Delivery",
+          "examples": ["last-mile delivery", "freight forwarding", "supply chain"]
+        },
+        {
+          "id": "fleet-management",
+          "name": "Fleet Management",
+          "examples": ["vehicle tracking", "maintenance scheduling", "driver management"]
+        },
+        {
+          "id": "parking-solutions",
+          "name": "Parking Solutions",
+          "examples": ["smart parking", "parking apps", "parking management"]
+        },
+        {
+          "id": "transportation-infrastructure",
+          "name": "Transportation Infrastructure",
+          "examples": ["traffic management", "toll systems", "smart highways"]
+        },
+        {
+          "id": "mobility-as-a-service",
+          "name": "Mobility as a Service",
+          "examples": ["integrated transport", "multi-modal platforms", "transport subscriptions"]
+        },
+        {
+          "id": "aviation-tech",
+          "name": "Aviation Tech",
+          "examples": ["flight booking", "airport technology", "drone delivery"]
+        }
+      ]
+    },
+    {
+      "id": "media-entertainment",
+      "name": "Media & Entertainment",
+      "description": "Digital media, streaming services, gaming, and content creation platforms",
+      "subverticals": [
+        {
+          "id": "streaming-services",
+          "name": "Streaming Services",
+          "examples": ["video streaming", "music streaming", "podcast platforms"]
+        },
+        {
+          "id": "gaming",
+          "name": "Gaming",
+          "examples": ["mobile games", "console games", "cloud gaming"]
+        },
+        {
+          "id": "content-creation",
+          "name": "Content Creation",
+          "examples": ["creator tools", "video editing", "content management"]
+        },
+        {
+          "id": "social-media",
+          "name": "Social Media",
+          "examples": ["social networks", "messaging apps", "community platforms"]
+        },
+        {
+          "id": "news-publishing",
+          "name": "News & Publishing",
+          "examples": ["digital news", "subscription media", "newsletter platforms"]
+        },
+        {
+          "id": "esports",
+          "name": "Esports",
+          "examples": ["competitive gaming", "esports platforms", "tournament organization"]
+        },
+        {
+          "id": "live-events",
+          "name": "Live Events",
+          "examples": ["virtual events", "ticketing platforms", "event streaming"]
+        },
+        {
+          "id": "podcasting",
+          "name": "Podcasting",
+          "examples": ["podcast hosting", "podcast discovery", "audio production"]
+        },
+        {
+          "id": "digital-advertising",
+          "name": "Digital Advertising",
+          "examples": ["ad tech platforms", "programmatic advertising", "influencer marketing"]
+        },
+        {
+          "id": "user-generated-content",
+          "name": "User Generated Content",
+          "examples": ["content platforms", "community-driven media", "collaborative content"]
+        }
+      ]
+    },
+    {
+      "id": "food-agtech",
+      "name": "Food & AgTech",
+      "description": "Food technology, agricultural innovation, and supply chain solutions",
+      "subverticals": [
+        {
+          "id": "food-delivery",
+          "name": "Food Delivery",
+          "examples": ["restaurant delivery", "ghost kitchens", "meal subscriptions"]
+        },
+        {
+          "id": "agtech",
+          "name": "AgTech",
+          "examples": ["precision farming", "crop monitoring", "farm management"]
+        },
+        {
+          "id": "alternative-proteins",
+          "name": "Alternative Proteins",
+          "examples": ["plant-based meat", "cultured meat", "insect protein"]
+        },
+        {
+          "id": "food-waste",
+          "name": "Food Waste",
+          "examples": ["waste reduction", "surplus redistribution", "composting tech"]
+        },
+        {
+          "id": "restaurant-tech",
+          "name": "Restaurant Tech",
+          "examples": ["POS systems", "kitchen automation", "reservation platforms"]
+        },
+        {
+          "id": "vertical-farming",
+          "name": "Vertical Farming",
+          "examples": ["indoor farming", "hydroponics", "urban agriculture"]
+        },
+        {
+          "id": "food-safety",
+          "name": "Food Safety",
+          "examples": ["traceability", "quality control", "supply chain monitoring"]
+        },
+        {
+          "id": "nutrition-tech",
+          "name": "Nutrition Tech",
+          "examples": ["personalized nutrition", "meal planning", "dietary tracking"]
+        },
+        {
+          "id": "beverage-tech",
+          "name": "Beverage Tech",
+          "examples": ["smart dispensers", "beverage innovation", "alcohol tech"]
+        },
+        {
+          "id": "food-robotics",
+          "name": "Food Robotics",
+          "examples": ["cooking robots", "food preparation", "automated kitchens"]
+        }
+      ]
+    },
+    {
+      "id": "energy-cleantech",
+      "name": "Energy & CleanTech",
+      "description": "Renewable energy, sustainability solutions, and environmental technology",
+      "subverticals": [
+        {
+          "id": "solar-energy",
+          "name": "Solar Energy",
+          "examples": ["solar panels", "solar farms", "residential solar"]
+        },
+        {
+          "id": "wind-energy",
+          "name": "Wind Energy",
+          "examples": ["wind turbines", "offshore wind", "wind farm management"]
+        },
+        {
+          "id": "energy-storage",
+          "name": "Energy Storage",
+          "examples": ["battery storage", "grid-scale storage", "home batteries"]
+        },
+        {
+          "id": "smart-grid",
+          "name": "Smart Grid",
+          "examples": ["grid management", "demand response", "energy distribution"]
+        },
+        {
+          "id": "carbon-tech",
+          "name": "Carbon Tech",
+          "examples": ["carbon capture", "carbon credits", "emissions tracking"]
+        },
+        {
+          "id": "water-tech",
+          "name": "Water Tech",
+          "examples": ["water purification", "desalination", "water management"]
+        },
+        {
+          "id": "waste-management",
+          "name": "Waste Management",
+          "examples": ["recycling tech", "waste-to-energy", "circular economy"]
+        },
+        {
+          "id": "sustainable-materials",
+          "name": "Sustainable Materials",
+          "examples": ["bio-materials", "recycled materials", "green chemistry"]
+        },
+        {
+          "id": "energy-efficiency",
+          "name": "Energy Efficiency",
+          "examples": ["building efficiency", "industrial efficiency", "home automation"]
+        },
+        {
+          "id": "hydrogen-energy",
+          "name": "Hydrogen Energy",
+          "examples": ["hydrogen production", "fuel cells", "hydrogen storage"]
+        }
+      ]
+    },
+    {
+      "id": "travel-hospitality",
+      "name": "Travel & Hospitality",
+      "description": "Travel booking, accommodation services, and tourism technology",
+      "subverticals": [
+        {
+          "id": "travel-booking",
+          "name": "Travel Booking",
+          "examples": ["flight booking", "hotel booking", "package deals"]
+        },
+        {
+          "id": "vacation-rentals",
+          "name": "Vacation Rentals",
+          "examples": ["short-term rentals", "property management", "local experiences"]
+        },
+        {
+          "id": "business-travel",
+          "name": "Business Travel",
+          "examples": ["corporate booking", "expense management", "travel policy"]
+        },
+        {
+          "id": "travel-experiences",
+          "name": "Travel Experiences",
+          "examples": ["tours and activities", "local guides", "adventure travel"]
+        },
+        {
+          "id": "hospitality-tech",
+          "name": "Hospitality Tech",
+          "examples": ["hotel management", "guest experience", "revenue management"]
+        },
+        {
+          "id": "travel-insurance",
+          "name": "Travel Insurance",
+          "examples": ["trip protection", "medical coverage", "cancellation insurance"]
+        },
+        {
+          "id": "destination-management",
+          "name": "Destination Management",
+          "examples": ["tourism boards", "destination marketing", "visitor management"]
+        },
+        {
+          "id": "travel-planning",
+          "name": "Travel Planning",
+          "examples": ["itinerary builders", "trip planning", "travel recommendations"]
+        },
+        {
+          "id": "loyalty-rewards",
+          "name": "Loyalty & Rewards",
+          "examples": ["travel rewards", "loyalty programs", "points management"]
+        },
+        {
+          "id": "sustainable-travel",
+          "name": "Sustainable Travel",
+          "examples": ["eco-tourism", "carbon offsetting", "responsible travel"]
+        }
+      ]
+    },
+    {
+      "id": "manufacturing-industry40",
+      "name": "Manufacturing & Industry 4.0",
+      "description": "Smart manufacturing, industrial IoT, and supply chain innovation",
+      "subverticals": [
+        {
+          "id": "industrial-iot",
+          "name": "Industrial IoT",
+          "examples": ["sensor networks", "machine monitoring", "predictive maintenance"]
+        },
+        {
+          "id": "robotics-automation",
+          "name": "Robotics & Automation",
+          "examples": ["industrial robots", "cobots", "process automation"]
+        },
+        {
+          "id": "3d-printing",
+          "name": "3D Printing",
+          "examples": ["additive manufacturing", "rapid prototyping", "custom production"]
+        },
+        {
+          "id": "supply-chain-tech",
+          "name": "Supply Chain Tech",
+          "examples": ["supply chain visibility", "inventory optimization", "demand planning"]
+        },
+        {
+          "id": "quality-control",
+          "name": "Quality Control",
+          "examples": ["automated inspection", "defect detection", "quality analytics"]
+        },
+        {
+          "id": "manufacturing-software",
+          "name": "Manufacturing Software",
+          "examples": ["MES systems", "ERP for manufacturing", "production planning"]
+        },
+        {
+          "id": "digital-twin",
+          "name": "Digital Twin",
+          "examples": ["virtual modeling", "simulation", "performance optimization"]
+        },
+        {
+          "id": "materials-science",
+          "name": "Materials Science",
+          "examples": ["advanced materials", "nanotechnology", "composite materials"]
+        },
+        {
+          "id": "industrial-ar-vr",
+          "name": "Industrial AR/VR",
+          "examples": ["training simulations", "remote assistance", "design visualization"]
+        },
+        {
+          "id": "smart-factories",
+          "name": "Smart Factories",
+          "examples": ["factory automation", "connected systems", "AI-driven production"]
+        }
+      ]
+    },
+    {
+      "id": "human-resources-future-work",
+      "name": "Human Resources & Future of Work",
+      "description": "HR technology, workforce management, and workplace innovation",
+      "subverticals": [
+        {
+          "id": "recruiting-talent",
+          "name": "Recruiting & Talent",
+          "examples": ["applicant tracking", "talent marketplaces", "AI recruiting"]
+        },
+        {
+          "id": "hr-management",
+          "name": "HR Management",
+          "examples": ["HRIS systems", "employee records", "benefits administration"]
+        },
+        {
+          "id": "employee-engagement",
+          "name": "Employee Engagement",
+          "examples": ["engagement surveys", "recognition platforms", "culture tools"]
+        },
+        {
+          "id": "learning-development",
+          "name": "Learning & Development",
+          "examples": ["corporate training", "skill development", "career pathing"]
+        },
+        {
+          "id": "remote-work",
+          "name": "Remote Work",
+          "examples": ["remote collaboration", "virtual offices", "distributed teams"]
+        },
+        {
+          "id": "freelance-gig",
+          "name": "Freelance & Gig",
+          "examples": ["freelance platforms", "gig marketplaces", "contractor management"]
+        },
+        {
+          "id": "performance-management",
+          "name": "Performance Management",
+          "examples": ["performance reviews", "goal tracking", "feedback systems"]
+        },
+        {
+          "id": "payroll-benefits",
+          "name": "Payroll & Benefits",
+          "examples": ["payroll processing", "benefits platforms", "compensation management"]
+        },
+        {
+          "id": "workplace-analytics",
+          "name": "Workplace Analytics",
+          "examples": ["people analytics", "productivity metrics", "workforce planning"]
+        },
+        {
+          "id": "employee-wellness",
+          "name": "Employee Wellness",
+          "examples": ["wellness programs", "mental health support", "work-life balance"]
+        }
+      ]
+    },
+    {
+      "id": "legal-regtech",
+      "name": "Legal & RegTech",
+      "description": "Legal technology, compliance solutions, and regulatory innovation",
+      "subverticals": [
+        {
+          "id": "legal-research",
+          "name": "Legal Research",
+          "examples": ["case law search", "legal databases", "AI-powered research"]
+        },
+        {
+          "id": "contract-management",
+          "name": "Contract Management",
+          "examples": ["contract automation", "CLM platforms", "e-signatures"]
+        },
+        {
+          "id": "compliance-tech",
+          "name": "Compliance Tech",
+          "examples": ["regulatory compliance", "risk management", "audit tools"]
+        },
+        {
+          "id": "legal-practice-management",
+          "name": "Legal Practice Management",
+          "examples": ["law firm software", "case management", "billing systems"]
+        },
+        {
+          "id": "dispute-resolution",
+          "name": "Dispute Resolution",
+          "examples": ["online arbitration", "mediation platforms", "ODR systems"]
+        },
+        {
+          "id": "intellectual-property",
+          "name": "Intellectual Property",
+          "examples": ["patent search", "trademark management", "IP protection"]
+        },
+        {
+          "id": "legal-marketplaces",
+          "name": "Legal Marketplaces",
+          "examples": ["lawyer matching", "legal services", "on-demand legal"]
+        },
+        {
+          "id": "document-automation",
+          "name": "Document Automation",
+          "examples": ["legal documents", "form generation", "template libraries"]
+        },
+        {
+          "id": "legal-analytics",
+          "name": "Legal Analytics",
+          "examples": ["case prediction", "legal data analysis", "litigation analytics"]
+        },
+        {
+          "id": "privacy-data-protection",
+          "name": "Privacy & Data Protection",
+          "examples": ["GDPR compliance", "data privacy tools", "consent management"]
+        }
+      ]
+    },
+    {
+      "id": "government-civic-tech",
+      "name": "Government & Civic Tech",
+      "description": "Government technology, civic engagement, and public sector innovation",
+      "subverticals": [
+        {
+          "id": "govtech",
+          "name": "GovTech",
+          "examples": ["digital government", "e-governance", "public services"]
+        },
+        {
+          "id": "civic-engagement",
+          "name": "Civic Engagement",
+          "examples": ["citizen participation", "community platforms", "public feedback"]
+        },
+        {
+          "id": "smart-cities",
+          "name": "Smart Cities",
+          "examples": ["urban planning", "city infrastructure", "IoT integration"]
+        },
+        {
+          "id": "public-safety",
+          "name": "Public Safety",
+          "examples": ["emergency response", "crime prevention", "disaster management"]
+        },
+        {
+          "id": "voting-elections",
+          "name": "Voting & Elections",
+          "examples": ["e-voting", "election management", "voter registration"]
+        },
+        {
+          "id": "government-procurement",
+          "name": "Government Procurement",
+          "examples": ["e-procurement", "vendor management", "contract bidding"]
+        },
+        {
+          "id": "digital-identity",
+          "name": "Digital Identity",
+          "examples": ["identity verification", "digital IDs", "authentication"]
+        },
+        {
+          "id": "public-health",
+          "name": "Public Health",
+          "examples": ["health surveillance", "disease tracking", "vaccination management"]
+        },
+        {
+          "id": "transparency-accountability",
+          "name": "Transparency & Accountability",
+          "examples": ["open data", "government transparency", "public records"]
+        },
+        {
+          "id": "social-services",
+          "name": "Social Services",
+          "examples": ["welfare systems", "social benefits", "case management"]
+        }
+      ]
+    }
+  ]
+}

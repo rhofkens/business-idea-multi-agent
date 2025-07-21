@@ -3,6 +3,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
 import fastifyCors from '@fastify/cors';
 import { authRoutes } from '../routes/auth-routes.js';
+import { registerPreferencesRoutes } from '../routes/preferences-routes.js';
 
 /**
  * Creates and configures a Fastify server instance with necessary plugins
@@ -64,6 +65,9 @@ export async function createFastifyServer(): Promise<FastifyInstance> {
 
   // Register authentication routes after CORS
   await fastify.register(authRoutes, { prefix: '/api/auth' });
+  
+  // Register preferences routes
+  await fastify.register(registerPreferencesRoutes, { prefix: '/api' });
 
   // Log registered plugins on server ready
   fastify.ready((err) => {
@@ -85,6 +89,12 @@ declare module '@fastify/session' {
       username: string;
       email: string;
       role: 'admin' | 'user' | 'guest';
+    };
+    businessPreferences?: {
+      vertical: string;
+      subVertical: string;
+      businessModel: string;
+      additionalContext: string;
     };
   }
 }

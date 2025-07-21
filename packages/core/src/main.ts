@@ -1,6 +1,7 @@
 import { configService } from './services/config-service.js';
 import { loggingService } from './services/logging-service.js';
 import { AgentOrchestrator } from './orchestrator/agent-orchestrator.js';
+import type { BusinessPreferences } from '@business-idea/shared';
 
 async function main() {
   loggingService.log({ level: 'INFO', message: 'Application starting.' });
@@ -19,8 +20,16 @@ async function main() {
 
   const orchestrator = new AgentOrchestrator();
 
+  // Default preferences for CLI usage
+  const defaultPreferences: BusinessPreferences = {
+    vertical: 'Media & Entertainment',
+    subVertical: 'Digital Media and Content Creation',
+    businessModel: 'B2B SaaS',
+    additionalContext: 'CLI-based execution with default preferences'
+  };
+
   try {
-    const finalResult = await orchestrator.runChain(useTestCache);
+    const finalResult = await orchestrator.runChain(defaultPreferences, useTestCache);
     console.log('Agent chain executed successfully.');
     console.log('Final Output:', finalResult);
     loggingService.log({ level: 'INFO', message: 'Application finished successfully.', details: `Final output: ${finalResult}` });

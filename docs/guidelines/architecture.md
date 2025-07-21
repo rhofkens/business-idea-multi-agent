@@ -22,6 +22,7 @@ The Business Idea Generator is a multi-interface application that demonstrates a
 ### Core Technologies
 - **Runtime**: Node.js LTS (v22.x) - Latest stable version for modern JavaScript features
 - **Language**: TypeScript 5.x - Type safety and modern language features
+- **Middleware**: Fastify - for REST APIs, session management etc
 - **AI Framework**: OpenAI Agents SDK for TypeScript (latest) - Core agent capabilities
 - **Model**: OpenAI o3 - High-capability language model for complex reasoning
 - **Logging**: Comma-separated value (CSV) format for simple, structured logging

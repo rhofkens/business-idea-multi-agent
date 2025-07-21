@@ -1,0 +1,34 @@
+{
+  "businessModels": [
+    {
+      "id": "B2B SaaS",
+      "name": "B2B SaaS",
+      "description": "Business-to-Business Software as a Service with recurring subscription revenue"
+    },
+    {
+      "id": "B2C Subscription",
+      "name": "B2C Subscription",
+      "description": "Consumer subscription model with recurring revenue"
+    },
+    {
+      "id": "Marketplace",
+      "name": "Marketplace",
+      "description": "Platform connecting buyers and sellers, earning commission on transactions"
+    },
+    {
+      "id": "Freemium",
+      "name": "Freemium",
+      "description": "Free basic tier with paid premium features"
+    },
+    {
+      "id": "Transaction-based",
+      "name": "Transaction-based",
+      "description": "Revenue per transaction or usage"
+    },
+    {
+      "id": "Enterprise SaaS",
+      "name": "Enterprise SaaS",
+      "description": "Software solutions for large enterprise customers"
+    }
+  ]
+}

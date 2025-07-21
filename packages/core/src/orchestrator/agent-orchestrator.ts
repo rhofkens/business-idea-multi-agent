@@ -13,15 +13,11 @@ import type { DocumentationAgentOutput } from '../types/agent-types.js';
 export class AgentOrchestrator {
   /**
    * Runs the full agent chain, from ideation to documentation.
+   * @param preferences The business preferences provided by the user
+   * @param useTestCache Whether to use test cache for development
    * @returns A promise that resolves to a success message.
    */
-  public async runChain(useTestCache = false): Promise<string> {
-    const preferences: BusinessPreferences = {
-      vertical: 'Media & Entertainment',
-      subVertical: 'Digital Media and Content Creation',
-      businessModel: 'B2B SaaS',
-    };
-
+  public async runChain(preferences: BusinessPreferences, useTestCache = false): Promise<string> {
     loggingService.log({
       level: 'INFO',
       message: 'Starting Ideation Agent with preferences:',

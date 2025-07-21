@@ -22,13 +22,13 @@ Your role is to be an expert developer who executes a pre-defined implementation
 After implementing all tasks for the step, you **MUST** run all of the following checks. **DO NOT** signal completion until all gates are 100% green.
 
 1.  **Run Full Test Suite:**
-    - Execute the complete test suite(s) for all relevant parts of the project (e.g., backend, frontend, services). The specific commands and tools to use are defined in the project'sor a `CONTRIBUTING.md` file).  Note that there might be no automated test suite, in this case the tests will be done manually by the user.
+    - Execute the complete test suite(s) for all relevant parts of the project (e.g., backend, frontend, services). The specific commands and tools to use are defined in `docs/guidelines/coding-guidelines.md`.  There might be no automated test suite, in this case the tests will be done manually by the user.
 
 2.  **Run Code Style & Formatting Checks:**
     - Run all code style and formatting checks to ensure there are zero errors. The required tools (e.g., ESLint, Prettier, Spotless) and their configurations are specified in `docs/guidelines/coding-guidelines.md`.
 
 3.  **Verify Test Coverage:**
-    - Verify that test coverage meets or exceeds the thresholds defined in the project's quality standards (check `docs/guidelines/architecture.md` or `coding-guidelines.md` for these). For POCs, there might be no test coverage.
+    - Verify that test coverage meets or exceeds the thresholds defined in the project's quality standards (check `docs/guidelines/architecture.md` or `coding-guidelines.md` for these). There might be no test coverage defined, in this case, running test coverage is not needed.
 
 4.  **Simulate CI Pass:**
     - Ensure all checks that run in the main Continuous Integration (CI) workflow would pass with your changes. This includes building the application, running tests, and any other validation steps defined in the CI pipeline configuration.

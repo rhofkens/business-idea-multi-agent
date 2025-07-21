@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Sparkles } from "lucide-react";
+import { Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { businessPreferencesApi } from "@/services/business-preferences-api";
+import type { BusinessOptionsResponse } from "@/services/business-preferences-api";
+import { useToast } from "@/hooks/use-toast";
 
 interface FormData {
   vertical: string;
@@ -18,96 +23,8 @@ interface IdeaGenerationFormProps {
   isGenerating?: boolean;
 }
 
-const verticals = [
-  { value: "fintech", label: "FinTech" },
-  { value: "healthtech", label: "HealthTech" },
-  { value: "edtech", label: "EdTech" },
-  { value: "ecommerce", label: "E-commerce" },
-  { value: "saas", label: "SaaS" },
-  { value: "marketplace", label: "Marketplace" },
-  { value: "mobility", label: "Mobility & Transportation" },
-  { value: "proptech", label: "PropTech" },
-];
-
-const subVerticals: Record<string, { value: string; label: string }[]> = {
-  fintech: [
-    { value: "payments", label: "Payments & Transfers" },
-    { value: "lending", label: "Lending & Credit" },
-    { value: "investing", label: "Investment & Trading" },
-    { value: "insurance", label: "InsurTech" },
-    { value: "banking", label: "Digital Banking" },
-    { value: "crypto", label: "Cryptocurrency" },
-  ],
-  healthtech: [
-    { value: "telemedicine", label: "Telemedicine" },
-    { value: "medical-devices", label: "Medical Devices" },
-    { value: "diagnostics", label: "Diagnostics" },
-    { value: "mental-health", label: "Mental Health" },
-    { value: "fitness", label: "Fitness & Wellness" },
-    { value: "pharma", label: "Digital Pharma" },
-  ],
-  edtech: [
-    { value: "k12", label: "K-12 Education" },
-    { value: "higher-ed", label: "Higher Education" },
-    { value: "corporate", label: "Corporate Training" },
-    { value: "language", label: "Language Learning" },
-    { value: "skills", label: "Skills Development" },
-    { value: "exam-prep", label: "Test Preparation" },
-  ],
-  ecommerce: [
-    { value: "b2c", label: "B2C Retail" },
-    { value: "b2b", label: "B2B Commerce" },
-    { value: "d2c", label: "Direct-to-Consumer" },
-    { value: "social-commerce", label: "Social Commerce" },
-    { value: "subscription", label: "Subscription Commerce" },
-    { value: "mobile-commerce", label: "Mobile Commerce" },
-  ],
-  saas: [
-    { value: "productivity", label: "Productivity Tools" },
-    { value: "analytics", label: "Analytics & BI" },
-    { value: "crm", label: "CRM & Sales" },
-    { value: "hr", label: "HR & Recruiting" },
-    { value: "marketing", label: "Marketing Automation" },
-    { value: "collaboration", label: "Team Collaboration" },
-  ],
-  marketplace: [
-    { value: "services", label: "Service Marketplace" },
-    { value: "goods", label: "Goods Marketplace" },
-    { value: "b2b-marketplace", label: "B2B Marketplace" },
-    { value: "freelance", label: "Freelance Platform" },
-    { value: "rental", label: "Rental Platform" },
-    { value: "peer-to-peer", label: "Peer-to-Peer" },
-  ],
-  mobility: [
-    { value: "rideshare", label: "Ride Sharing" },
-    { value: "delivery", label: "Delivery Services" },
-    { value: "logistics", label: "Logistics & Supply Chain" },
-    { value: "micro-mobility", label: "Micro-mobility" },
-    { value: "public-transport", label: "Public Transportation" },
-    { value: "automotive", label: "Automotive Tech" },
-  ],
-  proptech: [
-    { value: "residential", label: "Residential Real Estate" },
-    { value: "commercial", label: "Commercial Real Estate" },
-    { value: "property-management", label: "Property Management" },
-    { value: "smart-buildings", label: "Smart Buildings" },
-    { value: "construction", label: "Construction Tech" },
-    { value: "real-estate-finance", label: "Real Estate Finance" },
-  ],
-};
-
-const businessModels = [
-  { value: "subscription", label: "Subscription (SaaS/Recurring)" },
-  { value: "marketplace", label: "Marketplace (Commission)" },
-  { value: "freemium", label: "Freemium" },
-  { value: "advertising", label: "Advertising Supported" },
-  { value: "transaction", label: "Transaction-based" },
-  { value: "licensing", label: "Licensing" },
-  { value: "direct-sales", label: "Direct Sales" },
-  { value: "affiliate", label: "Affiliate/Referral" },
-];
-
 export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGenerationFormProps) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>({
     vertical: "",
     subVertical: "",
@@ -117,7 +34,27 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
 
   const [errors, setErrors] = useState<Partial<FormData>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch business options from backend
+  const { data: businessOptions, isLoading, error } = useQuery({
+    queryKey: ['businessOptions'],
+    queryFn: async (): Promise<BusinessOptionsResponse> => businessPreferencesApi.getOptions(),
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes (gcTime in v5)
+  });
+
+  // Reset subVertical when vertical changes
+  useEffect(() => {
+    if (formData.vertical && formData.subVertical) {
+      const selectedVertical = businessOptions?.verticals.find(v => v.id === formData.vertical);
+      const isValidSubVertical = selectedVertical?.subverticals.some(sv => sv.id === formData.subVertical);
+      
+      if (!isValidSubVertical) {
+        setFormData(prev => ({ ...prev, subVertical: "" }));
+      }
+    }
+  }, [formData.vertical, formData.subVertical, businessOptions]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const newErrors: Partial<FormData> = {};
@@ -131,7 +68,22 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
     }
 
     setErrors({});
-    onSubmit(formData);
+    
+    try {
+      const response = await businessPreferencesApi.submit(formData);
+      toast({
+        title: "Preferences submitted",
+        description: `Process ID: ${response.processId}. Your business ideas are being generated.`,
+      });
+      onSubmit(formData);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit preferences";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleVerticalChange = (value: string) => {
@@ -159,87 +111,110 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
     }
   };
 
-  const availableSubVerticals = formData.vertical ? subVerticals[formData.vertical] || [] : [];
+  const handleAdditionalContextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, additionalContext: e.target.value }));
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="flex items-center justify-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Loading business options...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="py-10">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load business options. Please refresh the page or try again later.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const selectedVertical = businessOptions?.verticals.find(v => v.id === formData.vertical);
+  const availableSubVerticals = selectedVertical?.subverticals || [];
 
   return (
-    <Card className="w-full shadow-elegant">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-2xl">
-          <Sparkles className="h-6 w-6 text-primary" />
-          Business Idea Generator
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          Generate Business Ideas
         </CardTitle>
         <CardDescription>
-          Configure your parameters to generate innovative business ideas with AI-powered analysis
+          Select your preferences to generate tailored business ideas using AI
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="vertical">Industry Vertical *</Label>
-              <Select value={formData.vertical} onValueChange={handleVerticalChange}>
-                <SelectTrigger className={errors.vertical ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select an industry vertical" />
-                </SelectTrigger>
-                <SelectContent>
-                  {verticals.map((vertical) => (
-                    <SelectItem key={vertical.value} value={vertical.value}>
-                      {vertical.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.vertical && (
-                <p className="text-sm text-destructive">{errors.vertical}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="subVertical">Sub-Vertical *</Label>
-              <Select 
-                value={formData.subVertical} 
-                onValueChange={handleSubVerticalChange}
-                disabled={!formData.vertical}
-              >
-                <SelectTrigger className={errors.subVertical ? "border-destructive" : ""}>
-                  <SelectValue 
-                    placeholder={
-                      formData.vertical 
-                        ? "Select a sub-vertical" 
-                        : "First select a vertical"
-                    } 
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableSubVerticals.map((subVertical) => (
-                    <SelectItem key={subVertical.value} value={subVertical.value}>
-                      {subVertical.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.subVertical && (
-                <p className="text-sm text-destructive">{errors.subVertical}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="vertical">Business Vertical</Label>
+            <Select value={formData.vertical} onValueChange={handleVerticalChange}>
+              <SelectTrigger id="vertical" className={errors.vertical ? "border-red-500" : ""}>
+                <SelectValue placeholder="Select a business vertical" />
+              </SelectTrigger>
+              <SelectContent>
+                {businessOptions?.verticals.map((vertical) => (
+                  <SelectItem key={vertical.id} value={vertical.id}>
+                    {vertical.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.vertical && (
+              <p className="text-sm text-red-500">{errors.vertical}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="businessModel">Business Model *</Label>
+            <Label htmlFor="subVertical">Sub-Vertical</Label>
+            <Select 
+              value={formData.subVertical} 
+              onValueChange={handleSubVerticalChange}
+              disabled={!formData.vertical}
+            >
+              <SelectTrigger id="subVertical" className={errors.subVertical ? "border-red-500" : ""}>
+                <SelectValue placeholder="Select a sub-vertical" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableSubVerticals.map((subVertical) => (
+                  <SelectItem key={subVertical.id} value={subVertical.id}>
+                    {subVertical.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.subVertical && (
+              <p className="text-sm text-red-500">{errors.subVertical}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="businessModel">Business Model</Label>
             <Select value={formData.businessModel} onValueChange={handleBusinessModelChange}>
-              <SelectTrigger className={errors.businessModel ? "border-destructive" : ""}>
+              <SelectTrigger id="businessModel" className={errors.businessModel ? "border-red-500" : ""}>
                 <SelectValue placeholder="Select a business model" />
               </SelectTrigger>
               <SelectContent>
-                {businessModels.map((model) => (
-                  <SelectItem key={model.value} value={model.value}>
-                    {model.label}
+                {businessOptions?.businessModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {errors.businessModel && (
-              <p className="text-sm text-destructive">{errors.businessModel}</p>
+              <p className="text-sm text-red-500">{errors.businessModel}</p>
             )}
           </div>
 
@@ -247,32 +222,27 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
             <Label htmlFor="additionalContext">Additional Context (Optional)</Label>
             <Textarea
               id="additionalContext"
-              placeholder="Provide any additional focus areas, constraints, or specific requirements for your business idea generation..."
+              placeholder="Provide any specific requirements, target audience, or constraints..."
               value={formData.additionalContext}
-              onChange={(e) => setFormData(prev => ({ ...prev, additionalContext: e.target.value }))}
-              className="min-h-[100px] resize-none"
+              onChange={handleAdditionalContextChange}
+              className="min-h-[100px]"
             />
-            <p className="text-sm text-muted-foreground">
-              This field helps our AI agents understand your specific needs and preferences.
-            </p>
           </div>
 
-          <Button 
-            type="submit" 
-            variant="gradient" 
-            size="lg" 
-            disabled={isGenerating}
+          <Button
+            type="submit"
             className="w-full"
+            disabled={isGenerating || isLoading}
           >
             {isGenerating ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating Ideas...
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4" />
-                Generate Business Ideas
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate Ideas
               </>
             )}
           </Button>
