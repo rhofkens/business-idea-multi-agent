@@ -114,6 +114,7 @@ export class AgentOrchestrator {
                 'info',
                 {
                   data: {
+                    ideaId: event.data.id,
                     ideaCount,
                     idea: event.data
                   }
@@ -148,6 +149,7 @@ export class AgentOrchestrator {
                     'info',
                     {
                       data: {
+                        ideaId: event.data.id,
                         refinedIdeaCount,
                         refinedIdea: event.data
                       }
@@ -273,6 +275,7 @@ export class AgentOrchestrator {
                       progress: Math.round((competitorCount / refinedIdeas.length) * 100),
                       stage: 'competitor-analysis',
                       data: {
+                        ideaId: event.data.ideaId,
                         competitorCount,
                         totalIdeas: refinedIdeas.length,
                         analysis: event.data
@@ -385,6 +388,7 @@ export class AgentOrchestrator {
             'info',
             {
               data: {
+                ideaId: criticallyEvaluatedIdeas[0].id,
                 title: criticallyEvaluatedIdeas[0].title,
                 overallScore: criticallyEvaluatedIdeas[0].overallScore
               }

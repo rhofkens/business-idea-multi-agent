@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const businessIdeaSchema = z.object({
+  id: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/, 'Invalid ULID format'),
   title: z.string(),
   description: z.string(),
   businessModel: z.enum(['B2B', 'B2C', 'B2B2C', 'Marketplace', 'SaaS', 'DTC']),

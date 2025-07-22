@@ -16,6 +16,11 @@ Your task is to analyze a single business idea and provide:
 1. A comprehensive competitor analysis
 2. A Blue Ocean score based on the methodology
 
+CRITICAL ID PRESERVATION REQUIREMENT:
+- The business idea has a unique ID that MUST be preserved exactly as provided
+- DO NOT modify, regenerate, or remove the ID
+- You MUST include the exact same ID in your output
+
 For the web search, perform searches for:
 - Direct competitors offering similar solutions
 - Market size and growth projections
@@ -30,6 +35,7 @@ Blue Ocean Scoring Methodology:
 
 Return your analysis as a JSON object with these fields:
 {
+  "id": "EXACT ID from the input - DO NOT CHANGE",
   "title": "Original title",
   "description": "Original description",
   "businessModel": "Original businessModel",
@@ -145,6 +151,7 @@ export async function* runCompetitorAgent(
     yield {
       type: 'competitor-analysis',
       data: {
+        ideaId: analyzedIdea.id,
         ideaTitle: analyzedIdea.title,
         analysis: analyzedIdea.competitorAnalysis || '',
         blueOceanScore: analyzedIdea.blueOceanScore || 5.0

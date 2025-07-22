@@ -48,6 +48,7 @@ Overall Score Calculation (ADR-005):
 
 Return your analysis as a JSON object with these fields:
 {
+  "id": "EXACT ID from the input - DO NOT CHANGE",
   "title": "Original title",
   "description": "Original description",
   "businessModel": "Original businessModel",
@@ -68,7 +69,9 @@ Return your analysis as a JSON object with these fields:
     "riskAdjustment": number,
     "calculation": "Show the detailed calculation"
   }
-}`;
+}
+
+CRITICAL: You MUST preserve the EXACT ID from each business idea. The ID field is required and must be copied exactly as provided.`;
 
 /**
  * Creates a new instance of the Business Critic Agent
@@ -93,6 +96,7 @@ async function analyzeSingleIdea(
   agent: Agent
 ): Promise<BusinessIdea> {
   const ideaContext = `
+ID: ${idea.id}
 Business Idea: ${idea.title}
 Description: ${idea.description}
 Business Model: ${idea.businessModel}
@@ -183,6 +187,7 @@ ${idea.reasoning.blueOcean ? `- Blue Ocean: ${idea.reasoning.blueOcean}` : ''}
        yield {
          type: 'critical-analysis',
          data: {
+           ideaId: analyzedIdea.id,
            ideaTitle: analyzedIdea.title,
            analysis: analyzedIdea.criticalAnalysis || '',
            overallScore: analyzedIdea.overallScore || 0

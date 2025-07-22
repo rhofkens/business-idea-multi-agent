@@ -106,6 +106,7 @@ export class WebSocketCacheEmitter {
         'info',
         {
           data: {
+            ideaId: idea.id,
             ideaCount: i + 1,
             idea: idea
           }
@@ -120,6 +121,7 @@ export class WebSocketCacheEmitter {
         'info',
         {
           data: {
+            ideaId: idea.id,
             refinedIdeaCount: i + 1,
             refinedIdea: idea
           }
@@ -155,9 +157,11 @@ export class WebSocketCacheEmitter {
       metadataBuilder: (idea, index, total) => ({
         stage: 'competitor-analysis',
         data: {
+          ideaId: idea.id,
           competitorCount: index + 1,
           totalIdeas: total,
           analysis: {
+            ideaId: idea.id,
             ideaTitle: idea.title,
             blueOceanScore: idea.blueOceanScore,
             analysis: idea.competitorAnalysis || ''
@@ -180,9 +184,11 @@ export class WebSocketCacheEmitter {
       metadataBuilder: (idea, index, total) => ({
         stage: 'critical-evaluation',
         data: {
+          ideaId: idea.id,
           criticalCount: index + 1,
           totalIdeas: total,
           evaluation: {
+            ideaId: idea.id,
             ideaTitle: idea.title,
             overallScore: idea.overallScore
           }
@@ -219,6 +225,7 @@ export class WebSocketCacheEmitter {
           progress: Math.round(((i + 1) / totalIdeas) * 100),
           stage: 'documentation',
           data: {
+            ideaId: criticallyEvaluatedIdeas[i]?.id,
             index: i + 1,
             total: totalIdeas,
             title: criticallyEvaluatedIdeas[i]?.title || `Idea ${i + 1}`

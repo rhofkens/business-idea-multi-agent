@@ -33,5 +33,5 @@ export type CriticAgentOutput = z.infer<typeof CriticAgentOutputSchema>;
 export type CriticStreamEvent =
   | { type: 'chunk'; data: string }
   | { type: 'status'; data: string }
-  | { type: 'critical-analysis'; data: { ideaTitle: string; analysis: string; overallScore: number } }
+  | { type: 'critical-analysis'; data: { ideaId: string; ideaTitle: string; analysis: string; overallScore: number } }
   | { type: 'complete' };

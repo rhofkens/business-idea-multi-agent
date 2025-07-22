@@ -33,5 +33,5 @@ export type CompetitorAgentOutput = z.infer<typeof CompetitorAgentOutputSchema>;
 export type CompetitorStreamEvent =
   | { type: 'chunk'; data: string }
   | { type: 'status'; data: string }
-  | { type: 'competitor-analysis'; data: { ideaTitle: string; analysis: string; blueOceanScore: number } }
+  | { type: 'competitor-analysis'; data: { ideaId: string; ideaTitle: string; analysis: string; blueOceanScore: number } }
   | { type: 'complete' };

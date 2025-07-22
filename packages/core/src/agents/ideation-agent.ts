@@ -10,8 +10,8 @@ import {
 import { parseCompleteIdeasFromBuffer } from '../utils/streaming-json-parser.js';
 import { z } from 'zod';
 import { configService } from '../services/config-service.js';
-
-const systemPrompt = `
+import { ulid } from 'ulidx';
+const createSystemPrompt = (ideaIds: string[]) => `
 You are an elite business strategist and innovation expert with deep expertise in identifying market gaps, disruptive technologies, and emerging trends. Your task is to generate exactly 10 groundbreaking business ideas that push the boundaries of what's possible.
 
 THINK CRITICALLY AND DEEPLY:
@@ -23,6 +23,13 @@ THINK CRITICALLY AND DEEPLY:
 
 You MUST output a valid JSON object with a single key "ideas" containing an array of exactly 10 business ideas.
 
+CRITICAL ID REQUIREMENTS:
+- You MUST use these EXACT IDs for the 10 ideas IN ORDER:
+${ideaIds.map((id, index) => `  ${index + 1}. "${id}"`).join('\n')}
+- DO NOT modify, regenerate, or skip any ID
+- Use the first ID for your first idea, second ID for your second idea, etc.
+- Each ID is a ULID (Universally Unique Lexicographically Sortable Identifier)
+
 CRITICAL REQUIREMENTS:
 - Output ONLY valid JSON with no additional text, markdown, or explanations
 - The root object MUST have a single key "ideas"
@@ -32,6 +39,7 @@ CRITICAL REQUIREMENTS:
 - Each object in the "ideas" array MUST conform exactly to this structure:
 
 {
+  "id": "string - MUST be the corresponding ID from the list above",
   "title": "string - A compelling, memorable name that captures the essence of the innovation",
   "description": "string - A comprehensive explanation including the problem solved, unique approach, and why it's revolutionary (2-3 sentences)",
   "businessModel": "string - MUST be exactly one of: B2B, B2C, B2B2C, Marketplace, SaaS, DTC",
@@ -46,6 +54,7 @@ CRITICAL REQUIREMENTS:
     "capital": "string - Break down major capital requirements and ROI timeline"
   }
 }
+}
 
 SCORING GUIDANCE:
 - Be extremely critical and realistic in your scoring
@@ -57,6 +66,7 @@ Example format:
 {
   "ideas": [
     {
+      "id": "01HQJD3X4Y5Z6K8RGBVTN9MEAW",
       "title": "Quantum-Enhanced Drug Discovery Platform",
       "description": "Leverages quantum computing to simulate molecular interactions at unprecedented scale, reducing drug discovery time from 10+ years to 2-3 years. Creates a marketplace connecting pharma companies with quantum computing resources and AI-driven analysis.",
       "businessModel": "B2B",
@@ -78,6 +88,12 @@ Example format:
 const refinementPrompt = `
 You are a world-class business strategist and venture capital analyst with deep expertise in evaluating and refining business ideas. Your task is to critically review and enhance the provided business ideas.
 
+CRITICAL ID PRESERVATION REQUIREMENT:
+- You MUST preserve the exact ID of each business idea
+- DO NOT modify, regenerate, or remove any ID
+- Each refined idea MUST have the same ID as the corresponding input idea
+- The order and count of ideas must remain exactly the same
+
 CRITICAL ANALYSIS FRAMEWORK:
 1. Challenge every assumption and score
 2. Identify gaps, weaknesses, and overlooked opportunities
@@ -93,7 +109,7 @@ REFINEMENT OBJECTIVES:
 - Suggest pivots or variations that could 10x the potential
 
 You MUST output a valid JSON object with a single key "ideas" containing the refined array of business ideas.
-Maintain the exact same structure as the input, but with enhanced content and adjusted scores where appropriate.
+Maintain the exact same structure as the input, including the ID field, but with enhanced content and adjusted scores where appropriate.
 
 REFINEMENT PRINCIPLES:
 - If an idea is truly weak, score it appropriately (don't inflate scores)
@@ -104,21 +120,27 @@ REFINEMENT PRINCIPLES:
 
 Remember: Great ideas often look crazy at first. Look for the non-obvious insights that others might miss.
 `;
-const ideationAgentInstance = new Agent({
-  name: 'Ideation Agent',
-  instructions: systemPrompt,
-  model: configService.ideationModel,
-});
-
-const refinementAgentInstance = new Agent({
-  name: 'Refinement Agent',
-  instructions: refinementPrompt,
-  model: configService.ideationModel,
-});
+// Agent instances will be created dynamically with generated IDs
 
 async function* executeIdeationAgent(
   preferences: BusinessPreferences,
 ): AsyncGenerator<StreamEvent, void, unknown> {
+  // Generate 10 unique IDs upfront
+  const ideaIds = Array.from({ length: 10 }, () => ulid());
+  
+  // Create agent instances with the generated IDs
+  const ideationAgentInstance = new Agent({
+    name: 'Ideation Agent',
+    instructions: createSystemPrompt(ideaIds),
+    model: configService.ideationModel,
+  });
+  
+  const refinementAgentInstance = new Agent({
+    name: 'Refinement Agent',
+    instructions: refinementPrompt,
+    model: configService.ideationModel,
+  });
+  
   // Phase 1: Generate initial ideas
   yield { type: 'status', data: 'Generating initial business ideas...' };
   
@@ -241,6 +263,6 @@ if (configService.useRefinement && collectedIdeas.length > 0) {
   }
 }
 export const ideationAgent = {
-  name: ideationAgentInstance.name,
+  name: 'Ideation Agent',
   execute: executeIdeationAgent,
 };

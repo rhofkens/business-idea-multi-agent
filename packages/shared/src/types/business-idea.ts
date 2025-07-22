@@ -16,6 +16,8 @@ export interface BusinessPreferences {
  * Represents a single business idea with all its analyzed attributes.
  */
 export interface BusinessIdea {
+  /** Unique identifier for the business idea (ULID format) */
+  id: string;
   title: string;
   description: string;
   businessModel: 'B2B' | 'B2C' | 'B2B2C' | 'Marketplace' | 'SaaS' | 'DTC';
