@@ -10,7 +10,7 @@
      - `title` → `idea.title` (direct mapping)
      - Initialize `idea.name` to empty string "" (not present in backend model)
      - `description` → `idea.description` (direct mapping)
-     - Idea sequence number → `idea.id` (sequential ID based on generation order)
+     - `id` → `idea.id` (ULID from backend, direct mapping)
      - `businessModel` → `idea.businessModel` (direct mapping)
      - `disruptionPotential` → `scores.disruption`
      - `marketPotential` → `scores.market`
@@ -21,12 +21,12 @@
      - `reasoning` → `idea.reasoning` (full object mapping)
      - `competitorAnalysis` → `idea.competitorAnalysis`
      - `criticalAnalysis` → `idea.criticalAnalysis`
-   - Generate unique sequential IDs for each business idea based on order received
+   - Preserve ULID identifiers from backend data
    - Add metadata fields (starred: false, lastUpdated: timestamp, isCurrentRun: true, reportPath: null)
 
 2. **Real-time WebSocket Integration**
    - Connect SmartTable to WebSocket event stream from Terminal Output Streaming (Increment 3)
-   - Listen for WorkflowEvent messages with type 'ideation_idea_generated'
+   - Listen for WorkflowEvent messages with type 'result' or 'progress' only
    - Parse streaming JSON data from ideation agent
    - Update table rows progressively as each idea is generated
    - Handle partial data states gracefully
@@ -78,7 +78,7 @@
    - [ ] Backend `title` field maps to `idea.title`
    - [ ] `idea.name` is initialized to empty string "" (field not present in backend)
    - [ ] Backend `description` field maps to `idea.description`
-   - [ ] Each business idea receives a unique sequential ID based on generation order (1, 2, 3, etc.)
+   - [ ] Backend `id` field (ULID) maps directly to `idea.id`
    - [ ] All score fields are properly converted from 1-10 scale
    - [ ] Missing optional fields (blueOceanScore, overallScore) are handled as null
    - [ ] Reasoning object is fully populated for all score types
