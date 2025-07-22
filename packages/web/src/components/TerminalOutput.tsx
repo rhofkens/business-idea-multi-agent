@@ -1,75 +1,156 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { 
-  Terminal, 
-  Play, 
-  Pause, 
-  Trash2, 
-  ArrowDown, 
-  ArrowUp 
+import {
+  Terminal,
+  Play,
+  Pause,
+  Trash2,
+  ArrowDown,
+  ArrowUp,
+  Wifi,
+  WifiOff
 } from "lucide-react";
-
-interface TerminalEvent {
-  id: string;
-  timestamp: string;
-  agent: 'ideation' | 'competitor' | 'critic' | 'documentation' | 'system';
-  message: string;
-  level: 'info' | 'success' | 'warning' | 'error';
-}
+import { useWebSocket } from "@/hooks/useWebSocket";
+import type { WorkflowEvent } from "@business-idea/shared";
 
 interface TerminalOutputProps {
-  events: TerminalEvent[];
   isActive?: boolean;
   className?: string;
+  // Optional filter by agent name
+  filterAgent?: string;
 }
-
-const agentColors = {
-  ideation: "text-agent-ideation",
-  competitor: "text-agent-competitor", 
-  critic: "text-agent-critic",
-  documentation: "text-agent-documentation",
-  system: "text-primary",
+const agentColors: Record<string, string> = {
+  IdeationAgent: "text-agent-ideation",
+  CompetitorAgent: "text-agent-competitor",
+  CriticAgent: "text-agent-critic",
+  DocumentationAgent: "text-agent-documentation",
+  Orchestrator: "text-primary",
+  System: "text-primary",
 };
 
-const levelColors = {
+const levelColors: Record<string, string> = {
   info: "text-foreground",
-  success: "text-success",
-  warning: "text-warning",
+  warn: "text-warning",
   error: "text-destructive",
+  debug: "text-muted-foreground",
 };
 
-export function TerminalOutput({ 
-  events = [], 
+// Map event type to display level
+const getDisplayLevel = (event: WorkflowEvent): string => {
+  switch (event.type) {
+    case 'error': return 'error';
+    case 'status': return 'info';
+    case 'progress': return 'info';
+    case 'result': return 'success';
+    case 'log': return event.level;
+    default: return 'info';
+  }
+};
+
+// Get a more user-friendly agent name
+const getAgentDisplayName = (agentName: string): string => {
+  return agentName.replace(/Agent$/, '').toUpperCase();
+};
+
+export function TerminalOutput({
   isActive = true,
-  className 
+  className,
+  filterAgent
 }: TerminalOutputProps) {
   const [isPaused, setIsPaused] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Use WebSocket hook to get real-time events
+  const {
+    events: wsEvents,
+    isConnected,
+    clearEvents,
+    subscribe,
+    unsubscribe
+  } = useWebSocket();
+
+  // Filter events if agent filter is provided
+  const events = filterAgent
+    ? wsEvents.filter(e => e.agentName === filterAgent)
+    : wsEvents;
+
+  // Subscribe to all agents on mount
+  useEffect(() => {
+    // Common agents to subscribe to
+    const agents = ['IdeationAgent', 'CompetitorAgent', 'CriticAgent', 'DocumentationAgent', 'Orchestrator'];
+    
+    agents.forEach(agent => subscribe(agent));
+
+    return () => {
+      agents.forEach(agent => unsubscribe(agent));
+    };
+  }, [subscribe, unsubscribe]);
+
+  // Set up MutationObserver to detect when ScrollArea viewport is rendered
+  useEffect(() => {
+    if (!scrollAreaRef.current) return;
+
+    const observer = new MutationObserver(() => {
+      // Look for the viewport element within ScrollArea
+      const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport && viewport instanceof HTMLDivElement) {
+        scrollViewportRef.current = viewport;
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(scrollAreaRef.current, {
+      childList: true,
+      subtree: true
+    });
+
+    // Also try to find it immediately in case it's already rendered
+    const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+    if (viewport && viewport instanceof HTMLDivElement) {
+      scrollViewportRef.current = viewport;
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   // Auto-scroll to bottom when new events arrive
   useEffect(() => {
-    if (autoScroll && !isPaused && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    if (autoScroll && !isPaused && bottomRef.current && scrollViewportRef.current) {
+      // Use the viewport element for scrolling
+      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
     }
   }, [events, autoScroll, isPaused]);
 
-  const handleScroll = () => {
-    if (!scrollAreaRef.current) return;
+  const handleScroll = useCallback(() => {
+    if (!scrollViewportRef.current) return;
     
-    const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+    const viewport = scrollViewportRef.current;
+    const { scrollTop, scrollHeight, clientHeight } = viewport;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
     setAutoScroll(isAtBottom);
-  };
+  }, []);
+
+  // Set up scroll event listener on viewport
+  useEffect(() => {
+    const viewport = scrollViewportRef.current;
+    if (!viewport) return;
+
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [handleScroll, scrollViewportRef.current]);
 
   const scrollToBottom = () => {
     setAutoScroll(true);
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollViewportRef.current) {
+      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
+    }
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -79,11 +160,6 @@ export function TerminalOutput({
       minute: '2-digit',
       second: '2-digit',
     });
-  };
-
-  const clearEvents = () => {
-    // This would typically call a prop function to clear events
-    console.log("Clear events requested");
   };
 
   if (isCollapsed) {
@@ -121,7 +197,12 @@ export function TerminalOutput({
           <CardTitle className="flex items-center gap-2 text-sm">
             <Terminal className="h-4 w-4" />
             Terminal Output
-            {!isPaused && (
+            {isConnected ? (
+              <Wifi className="h-3 w-3 text-success" />
+            ) : (
+              <WifiOff className="h-3 w-3 text-destructive" />
+            )}
+            {!isPaused && isConnected && (
               <div className="flex items-center gap-1">
                 <div className="h-2 w-2 bg-success rounded-full animate-pulse" />
                 <span className="text-xs text-muted-foreground">Live</span>
@@ -170,38 +251,50 @@ export function TerminalOutput({
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1">
-        <ScrollArea 
-          className="h-full px-4 pb-4"
+        <ScrollArea
+          className="h-80 px-4 pb-4"
           ref={scrollAreaRef}
-          onScrollCapture={handleScroll}
         >
           <div 
             className="space-y-1 font-mono text-xs shadow-terminal rounded-lg bg-card/50 p-3 min-h-full"
           >
             {events.length === 0 ? (
               <div className="text-muted-foreground italic">
-                Waiting for agent activity...
+                {isConnected
+                  ? "Waiting for agent activity..."
+                  : "Connecting to server..."}
               </div>
             ) : (
-              events.map((event) => (
-                <div key={event.id} className="flex gap-2 items-start">
-                  <span className="text-muted-foreground text-[10px] mt-0.5 min-w-[60px]">
-                    {formatTimestamp(event.timestamp)}
-                  </span>
-                  <span className={cn(
-                    "font-medium min-w-[80px] text-[10px] mt-0.5",
-                    agentColors[event.agent]
-                  )}>
-                    [{event.agent.toUpperCase()}]
-                  </span>
-                  <span className={cn(
-                    "flex-1 break-words",
-                    levelColors[event.level]
-                  )}>
-                    {event.message}
-                  </span>
-                </div>
-              ))
+              events.map((event) => {
+                const displayLevel = getDisplayLevel(event);
+                const agentColor = agentColors[event.agentName] || "text-foreground";
+                const levelColor = levelColors[displayLevel] || "text-foreground";
+                
+                return (
+                  <div key={event.id} className="flex gap-2 items-start">
+                    <span className="text-muted-foreground text-[10px] mt-0.5 min-w-[60px]">
+                      {formatTimestamp(event.timestamp)}
+                    </span>
+                    <span className={cn(
+                      "font-medium min-w-[80px] text-[10px] mt-0.5",
+                      agentColor
+                    )}>
+                      [{getAgentDisplayName(event.agentName)}]
+                    </span>
+                    <span className={cn(
+                      "flex-1 break-words",
+                      levelColor
+                    )}>
+                      {event.message}
+                      {event.metadata?.progress !== undefined && (
+                        <span className="ml-2 text-[10px] text-muted-foreground">
+                          ({event.metadata.progress}%)
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })
             )}
             <div ref={bottomRef} />
           </div>

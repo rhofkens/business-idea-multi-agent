@@ -48,7 +48,7 @@ class ApiClient {
    * Creates a new ApiClient instance.
    *
    * @param {ApiClientConfig} config - Configuration options
-   * @param {string} config.baseURL - Base URL for all requests (default: 'http://localhost:3000')
+   * @param {string} config.baseURL - Base URL for all requests (default: 'http://localhost:3001')
    * @param {Record<string, string>} config.headers - Additional default headers
    * @param {RequestCredentials} config.credentials - Credentials mode (default: 'include')
    *
@@ -61,7 +61,7 @@ class ApiClient {
    * ```
    */
   constructor(config: ApiClientConfig = {}) {
-    this.baseURL = config.baseURL || 'http://localhost:3000';
+    this.baseURL = config.baseURL || 'http://localhost:3001';
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       ...config.headers,
@@ -311,7 +311,7 @@ class ApiClient {
 
 /**
  * Default ApiClient instance configured for local development.
- * Uses http://localhost:3000 as base URL and includes credentials.
+ * Uses http://localhost:3001 as base URL and includes credentials.
  *
  * @example
  * ```typescript

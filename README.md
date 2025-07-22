@@ -187,7 +187,7 @@ The generated reports follow this structure:
    ```bash
    cd packages/core && npm run dev:server
    ```
-   This starts the Fastify authentication server on `http://localhost:3000`
+   This starts the Fastify authentication server on `http://localhost:3001`
 
 2. **Start the frontend** (in another terminal):
    ```bash
@@ -318,7 +318,7 @@ Create a `.env` file in the root directory with the following:
 OPENAI_API_KEY=your-api-key-here
 
 # Optional: Backend server configuration
-PORT=3000
+PORT=3001
 HOST=0.0.0.0
 
 # Optional: Session configuration
@@ -330,9 +330,9 @@ The core package will automatically load this configuration for both the authent
 ### Backend Server Configuration
 
 The authentication server runs on:
-- **Default URL**: `http://localhost:3000`
-- **API Base**: `http://localhost:3000/api`
-- **Auth endpoints**: `http://localhost:3000/api/auth/*`
+- **Default URL**: `http://localhost:3001`
+- **API Base**: `http://localhost:3001/api`
+- **Auth endpoints**: `http://localhost:3001/api/auth/*`
 
 Key endpoints:
 - `POST /api/auth/login` - User authentication

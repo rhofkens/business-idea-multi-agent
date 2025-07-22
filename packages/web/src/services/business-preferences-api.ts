@@ -48,8 +48,8 @@ export interface PreferencesSubmissionResponse {
 export class BusinessPreferencesApi {
   private client: ApiClient;
 
-  constructor(baseURL: string = 'http://localhost:3000') {
-    this.client = new ApiClient({ baseURL });
+  constructor(baseURL?: string) {
+    this.client = new ApiClient(baseURL ? { baseURL } : {});
   }
 
   /**
@@ -126,7 +126,7 @@ export class BusinessPreferencesApi {
 
 /**
  * Default BusinessPreferencesApi instance for use throughout the application.
- * Configured to use the default API base URL (http://localhost:3000).
+ * Uses the default API base URL configured in ApiClient.
  *
  * @example
  * ```typescript

@@ -67,7 +67,7 @@ Error Responses:
 **Implementation Example**:
 ```typescript
 // Frontend
-const response = await fetch('http://localhost:3000/api/auth/login', {
+const response = await fetch('http://localhost:3001/api/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   credentials: 'include', // Important for cookies
@@ -113,7 +113,7 @@ Success Response: 200 OK
 **Implementation Example**:
 ```typescript
 // Frontend
-const response = await fetch('http://localhost:3000/api/auth/logout', {
+const response = await fetch('http://localhost:3001/api/auth/logout', {
   method: 'POST',
   credentials: 'include'
 });
@@ -145,7 +145,7 @@ Error Response:
 **Implementation Example**:
 ```typescript
 // Frontend
-const response = await fetch('http://localhost:3000/api/auth/user', {
+const response = await fetch('http://localhost:3001/api/auth/user', {
   credentials: 'include'
 });
 
@@ -187,7 +187,7 @@ Error Response: 401 Unauthorized
 **Implementation Example**:
 ```typescript
 // Frontend - Quick auth check
-const response = await fetch('http://localhost:3000/api/auth/check', {
+const response = await fetch('http://localhost:3001/api/auth/check', {
   credentials: 'include'
 });
 

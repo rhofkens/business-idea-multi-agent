@@ -583,7 +583,7 @@ const users = new Map<string, User>();
 // Fastify CORS config
 await app.register(cors, {
   origin: (origin, cb) => {
-    const allowedOrigins = ['http://localhost:3000'];
+    const allowedOrigins = ['http://localhost:3001'];
     cb(null, allowedOrigins.includes(origin));
   },
   credentials: true
@@ -960,7 +960,7 @@ function useWebSocket(sessionId: string) {
   useEffect(() => {
     if (!sessionId) return;
     
-    const websocket = new WebSocket(`ws://localhost:3000/ws?sessionId=${sessionId}`);
+    const websocket = new WebSocket(`ws://localhost:3001/ws?sessionId=${sessionId}`);
     
     websocket.onopen = () => {
       setStatus('connected');
@@ -1042,7 +1042,7 @@ function AgentProgressDashboard({ sessionId }: { sessionId: string }) {
 ```typescript
 // Lightweight API client
 const api = {
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
   
   async request(path: string, options: RequestInit = {}) {
     const token = localStorage.getItem('token');

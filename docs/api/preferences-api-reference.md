@@ -113,7 +113,7 @@ Success Response: 200 OK
 **Implementation Example**:
 ```typescript
 // Frontend
-const response = await fetch('http://localhost:3000/api/preferences/options', {
+const response = await fetch('http://localhost:3001/api/preferences/options', {
   method: 'GET',
   headers: { 'Content-Type': 'application/json' },
   credentials: 'include'
@@ -188,7 +188,7 @@ Error Responses:
 **Implementation Example**:
 ```typescript
 // Frontend
-const response = await fetch('http://localhost:3000/api/preferences', {
+const response = await fetch('http://localhost:3001/api/preferences', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   credentials: 'include',

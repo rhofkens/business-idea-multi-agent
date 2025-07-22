@@ -4,6 +4,8 @@ import fastifySession from '@fastify/session';
 import fastifyCors from '@fastify/cors';
 import { authRoutes } from '../routes/auth-routes.js';
 import { registerPreferencesRoutes } from '../routes/preferences-routes.js';
+import websocketPlugin from '../plugins/websocket-plugin.js';
+import { websocketRoute } from '../routes/websocket-route.js';
 
 /**
  * Creates and configures a Fastify server instance with necessary plugins
@@ -63,11 +65,17 @@ export async function createFastifyServer(): Promise<FastifyInstance> {
     rolling: true // Reset expiry on activity
   });
 
+  // Register WebSocket plugin after session (it depends on session)
+  await fastify.register(websocketPlugin);
+
   // Register authentication routes after CORS
   await fastify.register(authRoutes, { prefix: '/api/auth' });
   
   // Register preferences routes
   await fastify.register(registerPreferencesRoutes, { prefix: '/api' });
+  
+  // Register WebSocket routes (no prefix, uses /ws directly)
+  await fastify.register(websocketRoute);
 
   // Log registered plugins on server ready
   fastify.ready((err) => {

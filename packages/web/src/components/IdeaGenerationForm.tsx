@@ -145,7 +145,7 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
   const availableSubVerticals = selectedVertical?.subverticals || [];
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
@@ -157,46 +157,48 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="vertical">Business Vertical</Label>
-            <Select value={formData.vertical} onValueChange={handleVerticalChange}>
-              <SelectTrigger id="vertical" className={errors.vertical ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select a business vertical" />
-              </SelectTrigger>
-              <SelectContent>
-                {businessOptions?.verticals.map((vertical) => (
-                  <SelectItem key={vertical.id} value={vertical.id}>
-                    {vertical.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.vertical && (
-              <p className="text-sm text-red-500">{errors.vertical}</p>
-            )}
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="vertical">Business Vertical</Label>
+              <Select value={formData.vertical} onValueChange={handleVerticalChange}>
+                <SelectTrigger id="vertical" className={errors.vertical ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select a business vertical" />
+                </SelectTrigger>
+                <SelectContent>
+                  {businessOptions?.verticals.map((vertical) => (
+                    <SelectItem key={vertical.id} value={vertical.id}>
+                      {vertical.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.vertical && (
+                <p className="text-sm text-red-500">{errors.vertical}</p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="subVertical">Sub-Vertical</Label>
-            <Select 
-              value={formData.subVertical} 
-              onValueChange={handleSubVerticalChange}
-              disabled={!formData.vertical}
-            >
-              <SelectTrigger id="subVertical" className={errors.subVertical ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select a sub-vertical" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableSubVerticals.map((subVertical) => (
-                  <SelectItem key={subVertical.id} value={subVertical.id}>
-                    {subVertical.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.subVertical && (
-              <p className="text-sm text-red-500">{errors.subVertical}</p>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="subVertical">Sub-Vertical</Label>
+              <Select
+                value={formData.subVertical}
+                onValueChange={handleSubVerticalChange}
+                disabled={!formData.vertical}
+              >
+                <SelectTrigger id="subVertical" className={errors.subVertical ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select a sub-vertical" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSubVerticals.map((subVertical) => (
+                    <SelectItem key={subVertical.id} value={subVertical.id}>
+                      {subVertical.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.subVertical && (
+                <p className="text-sm text-red-500">{errors.subVertical}</p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

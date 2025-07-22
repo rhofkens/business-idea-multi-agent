@@ -16,7 +16,7 @@ This checklist guides through manual testing of the business idea multi-agent sy
 #### A. Server Startup and Configuration
 
 - [ ] Start the web server with `npm run start:web`
-- [ ] Verify server starts on port 3000
+- [ ] Verify server starts on port 3001
 - [ ] Confirm session configuration is loaded correctly
 - [ ] Check CORS is enabled for frontend origin (http://localhost:5173)
 

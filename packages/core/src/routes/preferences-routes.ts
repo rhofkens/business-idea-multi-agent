@@ -82,8 +82,12 @@ export async function registerPreferencesRoutes(app: FastifyInstance): Promise<v
         const availableSubVerticals = getSubverticalOptions(vertical);
         return reply.code(400).send({
           error: 'Invalid subVertical for the selected vertical',
-          message: `The subVertical '${subVertical}' is not valid for ${vertical}`,
-          validSubVerticals: availableSubVerticals.map(s => s.id)
+          statusCode: 400,
+          details: {
+            vertical,
+            subvertical: subVertical,
+            validSubverticals: availableSubVerticals.map(s => s.id)
+          }
         });
       }
 
@@ -116,8 +120,10 @@ export async function registerPreferencesRoutes(app: FastifyInstance): Promise<v
             details: `Process ID: ${processId}`
           });
 
+          // Import the test cache flag check function
+          const { isTestCacheEnabled } = await import('../server.js');
           const orchestrator = new AgentOrchestrator();
-          await orchestrator.runChain(businessPreferences);
+          await orchestrator.runChain(businessPreferences, isTestCacheEnabled(), request.session.sessionId);
 
           loggingService.log({
             level: 'INFO',

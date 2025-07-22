@@ -257,7 +257,7 @@ export const useAuth = () => {
 
 ```typescript
 // packages/web/src/lib/api-client.ts
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export async function apiRequest<T>(
   endpoint: string,
@@ -511,7 +511,7 @@ test('protected route redirects when not authenticated', () => {
 SESSION_SECRET=<generate-strong-random-secret>
 NODE_ENV=production
 FRONTEND_URL=https://your-domain.com
-PORT=3000
+PORT=3001
 ```
 
 ### 2. Session Store

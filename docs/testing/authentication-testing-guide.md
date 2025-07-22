@@ -5,13 +5,13 @@ This guide provides comprehensive testing procedures for the authentication syst
 ## Overview
 
 The authentication system uses:
-- **Backend**: Fastify server running on **port 3000** (provides API endpoints)
+- **Backend**: Fastify server running on **port 3001** (provides API endpoints)
 - **Frontend**: React app running on **port 5173** (Vite dev server)
 - **Storage**: In-memory user store (test users only)
 - **Sessions**: Server-side sessions with httpOnly cookies
 
 ### Architecture
-- All authentication API endpoints (`/api/auth/*`) are served by the **backend** on port 3000
+- All authentication API endpoints (`/api/auth/*`) are served by the **backend** on port 3001
 - The frontend React app communicates with the backend via HTTP requests
 - Session cookies are managed by the backend server
 
@@ -62,7 +62,7 @@ Expected test coverage:
 npm install
 npm run build
 
-# Terminal 1: Start backend server (Fastify on port 3000)
+# Terminal 1: Start backend server (Fastify on port 3001)
 npm run start:core
 # This starts the backend API server that handles authentication
 
@@ -73,9 +73,9 @@ npm run dev
 ```
 
 **Important:**
-- Backend runs on: http://localhost:3000
+- Backend runs on: http://localhost:3001
 - Frontend runs on: http://localhost:5173
-- API endpoints are at: http://localhost:3000/api/auth/*
+- API endpoints are at: http://localhost:3001/api/auth/*
 
 ### 2. Authentication Flow Testing
 
@@ -87,7 +87,7 @@ npm run dev
    - Email: admin@test.com
    - Password: password123
 4. Click "Login"
-   - This sends a POST request to http://localhost:3000/api/auth/login (backend)
+   - This sends a POST request to http://localhost:3001/api/auth/login (backend)
 5. Verify:
    - Redirected to home page
    - User email displayed
@@ -145,12 +145,12 @@ Test each scenario and verify appropriate error messages:
 
 ### 4. API Testing with cURL
 
-All API requests go to the backend server on port 3000:
+All API requests go to the backend server on port 3001:
 
 #### Login Request
 ```bash
 # POST to backend API endpoint
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@test.com","password":"password123"}' \
   -c cookies.txt -v
@@ -158,19 +158,19 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 #### Check Authentication
 ```bash
-curl http://localhost:3000/api/auth/check \
+curl http://localhost:3001/api/auth/check \
   -b cookies.txt
 ```
 
 #### Get User Info
 ```bash
-curl http://localhost:3000/api/auth/user \
+curl http://localhost:3001/api/auth/user \
   -b cookies.txt
 ```
 
 #### Logout
 ```bash
-curl -X POST http://localhost:3000/api/auth/logout \
+curl -X POST http://localhost:3001/api/auth/logout \
   -b cookies.txt
 ```
 
@@ -205,7 +205,7 @@ curl -X POST http://localhost:3000/api/auth/logout \
 ## Troubleshooting Common Issues
 
 ### Issue: "Cannot connect to server"
-- Check backend is running on port 3000: `npm run start:core`
+- Check backend is running on port 3001: `npm run start:core`
 - Check frontend is running on port 5173: `cd packages/web && npm run dev`
 - Verify no firewall blocking
 - Check .env configuration
