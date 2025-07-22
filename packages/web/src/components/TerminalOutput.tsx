@@ -13,7 +13,7 @@ import {
   Wifi,
   WifiOff
 } from "lucide-react";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocketContext } from "@/contexts/WebSocketContext";
 import type { WorkflowEvent } from "@business-idea/shared";
 
 interface TerminalOutputProps {
@@ -74,7 +74,7 @@ export function TerminalOutput({
     clearEvents,
     subscribe,
     unsubscribe
-  } = useWebSocket();
+  } = useWebSocketContext();
 
   // Filter events if agent filter is provided
   const events = filterAgent

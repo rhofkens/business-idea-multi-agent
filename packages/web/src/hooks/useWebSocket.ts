@@ -10,6 +10,7 @@ export interface WebSocketOptions {
   autoReconnect?: boolean;
   reconnectDelay?: number;
   maxReconnectAttempts?: number;
+  eventTypes?: Array<'log' | 'status' | 'error' | 'progress' | 'result'>;
 }
 
 export interface WebSocketState {
@@ -32,7 +33,8 @@ export function useWebSocket(options: WebSocketOptions = {}): WebSocketState & W
     url = '/ws',
     autoReconnect = true,
     reconnectDelay = 1000,
-    maxReconnectAttempts = 5
+    maxReconnectAttempts = 5,
+    eventTypes
   } = options;
 
   const [state, setState] = useState<WebSocketState>({
@@ -71,11 +73,18 @@ export function useWebSocket(options: WebSocketOptions = {}): WebSocketState & W
   const handleWorkflowEvent = useCallback((event: WorkflowEvent) => {
     if (!mountedRef.current) return;
     
+    // Filter events based on eventTypes if provided
+    if (eventTypes && eventTypes.length > 0) {
+      if (!eventTypes.includes(event.type)) {
+        return; // Skip events not in the filter
+      }
+    }
+    
     setState(prev => ({
       ...prev,
       events: [...prev.events, event]
     }));
-  }, []);
+  }, [eventTypes]);
 
   const handleServerEvent = useCallback((event: ServerEvent) => {
     switch (event.type) {

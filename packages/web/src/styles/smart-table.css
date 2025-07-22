@@ -1,0 +1,149 @@
+/* Smart Table Animations and Enhancements */
+
+/* Very simple fade-in for new rows */
+@keyframes softFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Only apply opacity animation to prevent layout shifts */
+.new-idea-glow {
+  animation: softFadeIn 2s ease-out;
+}
+
+/* Add a subtle highlight that doesn't affect layout */
+.new-idea-glow td {
+  position: relative;
+}
+
+.new-idea-glow td:first-child::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: hsl(var(--primary));
+  opacity: 0;
+  animation: fadeInOut 2s ease-out;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Highlight effect for newly added rows */
+.smart-table-row-highlight::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: hsl(var(--primary));
+  animation: highlightPulse 2s ease-out;
+}
+
+@keyframes highlightPulse {
+  0% {
+    opacity: 1;
+    width: 3px;
+  }
+  50% {
+    opacity: 0.8;
+    width: 4px;
+  }
+  100% {
+    opacity: 0;
+    width: 3px;
+  }
+}
+
+/* Smooth transitions for score updates */
+.score-cell {
+  transition: all 0.3s ease;
+}
+
+/* Loading shimmer effect for pending values */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* Streaming indicator animation */
+.streaming-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Enhanced hover effects for desktop */
+@media (hover: hover) {
+  .smart-table-row {
+    transition: background-color 0.15s ease;
+  }
+  
+  .smart-table-row:hover {
+    background-color: hsl(var(--muted) / 0.5);
+  }
+  
+  .score-cell:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Responsive table scroll */
+.smart-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Desktop-specific enhancements */
+@media (min-width: 1024px) {
+  .smart-table-container {
+    overflow-x: visible;
+  }
+  
+  /* Sticky header for better desktop experience */
+  .smart-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: hsl(var(--background));
+  }
+}
