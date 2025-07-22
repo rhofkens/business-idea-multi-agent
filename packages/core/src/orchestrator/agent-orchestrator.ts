@@ -8,6 +8,7 @@ import { TestCacheService } from '../services/test-cache-service.js';
 import type { DocumentationAgentOutput } from '../types/agent-types.js';
 import { WebSocketSessionManager } from '../services/websocket-session-manager.js';
 import type { WorkflowEvent } from '@business-idea/shared';
+import { WebSocketCacheEmitter } from '../services/websocket-cache-emitter.js';
 
 /**
  * Orchestrates the sequential execution of the agent chain.
@@ -15,6 +16,14 @@ import type { WorkflowEvent } from '@business-idea/shared';
 export class AgentOrchestrator {
   private wsManager = WebSocketSessionManager.getInstance();
   private sessionId?: string;
+  private cacheEmitter: WebSocketCacheEmitter;
+
+  constructor() {
+    this.cacheEmitter = new WebSocketCacheEmitter(
+      (type, agentName, message, level, metadata) =>
+        this.emitEvent(type, agentName, message, level, metadata)
+    );
+  }
 
   /**
    * Helper method to emit a workflow event
@@ -199,58 +208,8 @@ export class AgentOrchestrator {
         refinedIdeaCount = refinedIdeas.length;
         console.log(`\n📦 Loaded ${refinedIdeas.length} ideas from cache`);
         
-        // Emit cached results with delays to simulate real execution
-        this.emitEvent('status', 'IdeationAgent', '📦 Loading cached ideas...', 'info');
-        
-        for (let i = 0; i < refinedIdeas.length; i++) {
-          const idea = refinedIdeas[i];
-          
-          // Random delay between 500ms and 1000ms
-          const delay = Math.floor(Math.random() * 500) + 500;
-          await new Promise(resolve => setTimeout(resolve, delay));
-          
-          // Emit initial idea event
-          this.emitEvent(
-            'result',
-            'IdeationAgent',
-            `💡 Idea ${i + 1}: ${idea.title}`,
-            'info',
-            {
-              data: {
-                ideaCount: i + 1,
-                idea: idea
-              }
-            }
-          );
-          
-          // Emit refined idea event
-          this.emitEvent(
-            'result',
-            'IdeationAgent',
-            `🌟 Refined Idea ${i + 1}: ${idea.title}`,
-            'info',
-            {
-              data: {
-                refinedIdeaCount: i + 1,
-                refinedIdea: idea
-              }
-            }
-          );
-        }
-        
-        // Emit completion event
-        this.emitEvent(
-          'status',
-          'IdeationAgent',
-          `✅ Loaded ${refinedIdeas.length} cached ideas!`,
-          'info',
-          {
-            data: {
-              ideaCount: refinedIdeas.length,
-              refinedIdeaCount: refinedIdeas.length
-            }
-          }
-        );
+        // Use the cache emitter to simulate cached results
+        await this.cacheEmitter.simulateIdeationAgentCache(refinedIdeas);
       }
 
       // Step 2: Run Competitor Analysis Agent
@@ -362,50 +321,8 @@ export class AgentOrchestrator {
           competitorCount = enrichedIdeas.length;
           console.log(`\n📦 Loaded ${enrichedIdeas.length} competitor-analyzed ideas from cache`);
           
-          // Emit cached results with delays to simulate real execution
-          this.emitEvent('status', 'CompetitorAgent', '📦 Loading cached competitor analysis...', 'info');
-          
-          for (let i = 0; i < enrichedIdeas.length; i++) {
-            const idea = enrichedIdeas[i];
-            
-            // Random delay between 500ms and 1000ms
-            const delay = Math.floor(Math.random() * 500) + 500;
-            await new Promise(resolve => setTimeout(resolve, delay));
-            
-            // Emit competitor analysis event
-            this.emitEvent(
-              'progress',
-              'CompetitorAgent',
-              `🎯 Analyzing idea ${i + 1}/${enrichedIdeas.length}: ${idea.title}`,
-              'info',
-              {
-                progress: Math.round(((i + 1) / enrichedIdeas.length) * 100),
-                stage: 'competitor-analysis',
-                data: {
-                  competitorCount: i + 1,
-                  totalIdeas: enrichedIdeas.length,
-                  analysis: {
-                    ideaTitle: idea.title,
-                    blueOceanScore: idea.blueOceanScore,
-                    analysis: idea.competitorAnalysis || ''
-                  }
-                }
-              }
-            );
-          }
-          
-          // Emit completion event
-          this.emitEvent(
-            'status',
-            'CompetitorAgent',
-            `✅ Loaded ${competitorCount} cached competitor analyses!`,
-            'info',
-            {
-              data: {
-                competitorCount
-              }
-            }
-          );
+          // Use the cache emitter to simulate cached results
+          await this.cacheEmitter.simulateCompetitorAgentCache(enrichedIdeas);
         }
 
         // Log the first idea's Blue Ocean score as per acceptance criteria
@@ -453,36 +370,8 @@ export class AgentOrchestrator {
         if (useTestCache && criticallyEvaluatedIdeas.length > 0) {
           console.log(`\n📦 Loaded ${criticallyEvaluatedIdeas.length} critically evaluated ideas from cache`);
           
-          // Emit cached results with delays to simulate real execution
-          this.emitEvent('status', 'CriticAgent', '📦 Loading cached critical evaluations...', 'info');
-          
-          for (let i = 0; i < criticallyEvaluatedIdeas.length; i++) {
-            const idea = criticallyEvaluatedIdeas[i];
-            
-            // Random delay between 500ms and 1000ms
-            const delay = Math.floor(Math.random() * 500) + 500;
-            await new Promise(resolve => setTimeout(resolve, delay));
-            
-            // Emit critical evaluation event
-            this.emitEvent(
-              'progress',
-              'CriticAgent',
-              `🎯 Evaluating idea ${i + 1}/${criticallyEvaluatedIdeas.length}: ${idea.title}`,
-              'info',
-              {
-                progress: Math.round(((i + 1) / criticallyEvaluatedIdeas.length) * 100),
-                stage: 'critical-evaluation',
-                data: {
-                  criticalCount: i + 1,
-                  totalIdeas: criticallyEvaluatedIdeas.length,
-                  evaluation: {
-                    ideaTitle: idea.title,
-                    overallScore: idea.overallScore
-                  }
-                }
-              }
-            );
-          }
+          // Use the cache emitter to simulate cached results
+          await this.cacheEmitter.simulateCriticAgentCache(criticallyEvaluatedIdeas);
         }
 
         // Log the first idea's Overall Score as per acceptance criteria
@@ -648,70 +537,10 @@ export class AgentOrchestrator {
 if (useTestCache && documentationResult) {
   console.log(`\n📦 Loaded documentation result from cache`);
   
-  // Emit cached results with delays to simulate real execution
-  this.emitEvent('status', 'DocumentationAgent', '📦 Loading cached documentation...', 'info');
-  
-  // Simulate processing each idea with delays
-  const totalIdeas = documentationResult.ideasProcessed || criticallyEvaluatedIdeas.length;
-  for (let i = 0; i < totalIdeas; i++) {
-    // Random delay between 500ms and 1000ms
-    const delay = Math.floor(Math.random() * 500) + 500;
-    await new Promise(resolve => setTimeout(resolve, delay));
-    
-    // Emit idea processed event
-    this.emitEvent(
-      'progress',
-      'DocumentationAgent',
-      `✅ Documented idea ${i + 1}/${totalIdeas}`,
-      'info',
-      {
-        progress: Math.round(((i + 1) / totalIdeas) * 100),
-        stage: 'documentation',
-        data: {
-          index: i + 1,
-          total: totalIdeas,
-          title: criticallyEvaluatedIdeas[i]?.title || `Idea ${i + 1}`
-        }
-      }
-    );
-  }
-  
-  // Emit section generation events
-  const sections = ['Executive Summary', 'Market Analysis', 'Competitive Landscape', 'Risk Assessment', 'Recommendations'];
-  for (const section of sections) {
-    const delay = Math.floor(Math.random() * 500) + 500;
-    await new Promise(resolve => setTimeout(resolve, delay));
-    
-    this.emitEvent(
-      'progress',
-      'DocumentationAgent',
-      `📝 Generated section: ${section}`,
-      'info',
-      {
-        stage: 'section-generation',
-        data: {
-          section: section
-        }
-      }
-    );
-  }
-  
-  // Emit completion event
-  this.emitEvent('status', 'DocumentationAgent', '✅ Documentation generation complete!', 'info');
-  
-  // Emit result event
-  this.emitEvent(
-    'result',
-    'DocumentationAgent',
-    `📄 Report saved to: ${documentationResult.reportPath}`,
-    'info',
-    {
-      data: {
-        reportPath: documentationResult.reportPath,
-        ideasProcessed: documentationResult.ideasProcessed,
-        processingTime: documentationResult.processingTime
-      }
-    }
+  // Use WebSocketCacheEmitter to simulate cached results
+  await this.cacheEmitter.simulateDocumentationAgentCache(
+    documentationResult,
+    criticallyEvaluatedIdeas
           );
         }
 
