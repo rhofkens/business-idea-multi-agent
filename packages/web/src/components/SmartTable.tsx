@@ -106,38 +106,109 @@ export function SmartTable({
 
   const { events, subscribe, unsubscribe, clearEvents } = useWebSocketContext();
   
-  // Subscribe to the IdeationAgent when the component is active
+  // Subscribe to the IdeationAgent and CompetitorAgent when the component is active
   useEffect(() => {
     if (isActive) {
       subscribe("IdeationAgent");
+      subscribe("CompetitorAgent");
       // When a new generation starts, we should clear out the old ideas
       clearEvents();
     }
     return () => {
       unsubscribe("IdeationAgent");
+      unsubscribe("CompetitorAgent");
     };
   }, [isActive, subscribe, unsubscribe, clearEvents]);
   
   // Memoize the transformation of events to ideas
   const ideas = useMemo(() => {
     const ideaMap = new Map<string, BusinessIdea>();
+    
+    // Define types for competitor data
+    interface CompetitorInfo {
+      name: string;
+      description: string;
+    }
+    
+    interface CompetitorData {
+      competitorAnalysis: string;
+      blueOceanScore: number;
+    }
+    
+    const competitorDataMap = new Map<string, CompetitorData>();
     const relevantEvents = events.filter(
       (e): e is IdeaWorkflowEvent => {
-        if (e.agentName !== "IdeationAgent" || e.type !== "result" || !e.metadata?.data) {
-          return false;
+        // Accept IdeationAgent result events
+        if (e.agentName === "IdeationAgent" && e.type === "result" && e.metadata?.data) {
+          // Use Zod to safely parse the data
+          const parsed = ideaDataSchema.safeParse(e.metadata.data);
+          return parsed.success;
         }
-        // Use Zod to safely parse the data
-        const parsed = ideaDataSchema.safeParse(e.metadata.data);
-        return parsed.success;
+        // Accept CompetitorAgent progress events
+        if (e.agentName === "CompetitorAgent" && e.type === "progress" && e.metadata?.data) {
+          return true;
+        }
+        return false;
       }
     );
 
     for (const event of relevantEvents) {
-      // No need for try-catch as Zod has already validated the structure
-      const ideaData = event.metadata.data.idea;
-      const transformedIdea = transformBusinessIdea(ideaData, 0, true);
-      ideaMap.set(transformedIdea.id, transformedIdea);
+      if (event.agentName === "IdeationAgent") {
+        // No need for try-catch as Zod has already validated the structure
+        const ideaData = event.metadata.data.idea;
+        const transformedIdea = transformBusinessIdea(ideaData, 0, true);
+        ideaMap.set(transformedIdea.id, transformedIdea);
+      } else if (event.agentName === "CompetitorAgent" && event.type === "progress") {
+        try {
+          // Parse CompetitorAgent progress events
+          const data = event.metadata?.data as {
+            ideaId?: string;
+            competitorCount?: number;
+            totalIdeas?: number;
+            analysis?: {
+              ideaId?: string;
+              ideaTitle?: string;
+              analysis?: string;
+              blueOceanScore?: number;
+            };
+          };
+          // Check if this event contains competitor analysis data
+          if (data?.analysis?.ideaId && data?.analysis?.analysis && typeof data?.analysis?.blueOceanScore === "number") {
+            
+            
+            // Store the competitor analysis text and blue ocean score
+            competitorDataMap.set(data.analysis.ideaId, {
+              competitorAnalysis: data.analysis.analysis,
+              blueOceanScore: data.analysis.blueOceanScore
+            });
+            console.log('[SmartTable] Stored competitor data for idea:', data.analysis.ideaId);
+          }
+        } catch (error) {
+          console.error('Error processing CompetitorAgent event:', error);
+        }
+      }
     }
+    
+    console.log('[SmartTable] IdeaMap size:', ideaMap.size);
+    console.log('[SmartTable] CompetitorDataMap size:', competitorDataMap.size);
+    console.log('[SmartTable] CompetitorDataMap entries:', Array.from(competitorDataMap.entries()));
+    
+    // Merge competitor data with ideas
+    ideaMap.forEach((idea, id) => {
+      console.log('[SmartTable] Checking competitor data for idea:', id);
+      const competitorData = competitorDataMap.get(id);
+      if (competitorData) {
+        console.log('[SmartTable] Found competitor data for idea:', id, competitorData);
+        // Update the idea with competitor analysis data
+        idea.competitorAnalysis = competitorData.competitorAnalysis;
+        idea.scores.blueOcean = competitorData.blueOceanScore;
+        // Add blue ocean reasoning if not already present
+        if (!idea.reasoning.blueOcean) {
+          idea.reasoning.blueOcean = 'Blue Ocean score calculated based on competitor analysis';
+        }
+        console.log('[SmartTable] Updated idea with competitor data:', idea);
+      }
+    });
     
     // Add starring status from local state
     const ideasWithStars = Array.from(ideaMap.values()).map(idea => ({
