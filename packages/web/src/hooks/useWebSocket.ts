@@ -10,7 +10,7 @@ export interface WebSocketOptions {
   autoReconnect?: boolean;
   reconnectDelay?: number;
   maxReconnectAttempts?: number;
-  eventTypes?: Array<'log' | 'status' | 'error' | 'progress' | 'result'>;
+  eventTypes?: Array<'log' | 'status' | 'error' | 'progress' | 'result' | 'workflow'>;
 }
 
 export interface WebSocketState {

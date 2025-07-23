@@ -105,13 +105,14 @@ function BusinessIdeaGenerator() {
 
 ```typescript
 interface WorkflowEvent {
-  type: 'chunk' | 'status' | 'idea' | 'refined-idea' | 'result' | 'log' | 'complete' | 'error';
+  type: 'chunk' | 'status' | 'idea' | 'refined-idea' | 'result' | 'log' | 'complete' | 'error' | 'workflow';
   agentName: string;
   data?: any;
   timestamp: string;
   metadata?: {
     sequenceNumber?: number;
     sessionId?: string;
+    stage?: string;
     [key: string]: any;
   };
 }
@@ -171,6 +172,30 @@ interface WorkflowEvent {
   data: {
     refinedIdea: { /* refined idea object */ },
     originalIdea: { /* original idea object */ }
+  }
+}
+```
+
+#### Workflow Events (Agent Progress)
+```typescript
+// CriticAgent evaluation event
+{
+  type: 'workflow',
+  agentName: 'CriticAgent',
+  metadata: {
+    stage: 'critical-evaluation',
+    data: {
+      evaluation: {
+        ideaId: 'ulid-123',
+        criticalAnalysis: 'This idea shows promise because...',
+        overallScore: 8.5,
+        reasoning: {
+          marketPotential: 'Strong market demand...',
+          technicalFeasibility: 'Technically achievable...',
+          competitiveAdvantage: 'Unique positioning...'
+        }
+      }
+    }
   }
 }
 ```
@@ -357,6 +382,88 @@ useEffect(() => {
    - Messages (all sent/received data)
    - Timing information
 
+## SmartTable Component Integration
+
+The [`SmartTable`](packages/web/src/components/SmartTable.tsx) component demonstrates advanced WebSocket integration with multiple agents, including the CriticAgent for real-time evaluation updates.
+
+### Subscribing to Multiple Agents
+
+```typescript
+// Subscribe to multiple agents for comprehensive data
+useEffect(() => {
+  if (isActive) {
+    subscribe("IdeationAgent");
+    subscribe("CompetitorAgent");
+    subscribe("CriticAgent");
+    clearEvents(); // Clear old events when starting new generation
+  }
+  return () => {
+    unsubscribe("IdeationAgent");
+    unsubscribe("CompetitorAgent");
+    unsubscribe("CriticAgent");
+  };
+}, [isActive, subscribe, unsubscribe, clearEvents]);
+```
+
+### Filtering CriticAgent Events
+
+The SmartTable uses the WebSocketContext with a custom filter to process CriticAgent workflow events:
+
+```typescript
+const { events } = useWebSocketContext({
+  eventFilter: (e: WorkflowEvent) => {
+    // Accept CriticAgent workflow events
+    if (e.agentName === "CriticAgent" &&
+        e.type === "workflow" &&
+        e.metadata?.stage === "critical-evaluation") {
+      return true;
+    }
+    // ... other agent filters
+  }
+});
+```
+
+### Processing Critic Evaluation Data
+
+```typescript
+// Extract and store critic evaluation data
+if (event.agentName === "CriticAgent" && event.metadata?.stage === "critical-evaluation") {
+  const criticData = event.metadata?.data as { evaluation?: CriticEvaluation };
+  
+  if (criticData?.evaluation) {
+    const evaluation = criticData.evaluation;
+    
+    // Convert reasoning object to Map for consistent handling
+    const overallReasoning = evaluation.reasoning &&
+      typeof evaluation.reasoning === 'object' ?
+      new Map(Object.entries(evaluation.reasoning)) :
+      undefined;
+    
+    // Store the critic evaluation data
+    criticDataMap.set(evaluation.ideaId, {
+      criticalAnalysis: evaluation.criticalAnalysis,
+      overallScore: evaluation.overallScore,
+      reasoning: overallReasoning
+    });
+  }
+}
+```
+
+### Displaying Critic Data
+
+The SmartTable integrates critic data with business ideas:
+
+```typescript
+// Merge critic data with business ideas
+const mergedIdeas = ideas.map(idea => ({
+  ...idea,
+  // Add critic evaluation data if available
+  criticalAnalysis: criticData?.criticalAnalysis || null,
+  overallScore: criticData?.overallScore || null,
+  overallScoreReasoning: criticData?.reasoning || ""
+}));
+```
+
 ## Best Practices
 
 1. **Unsubscribe on Cleanup**: Always unsubscribe from agents when components unmount
@@ -364,6 +471,8 @@ useEffect(() => {
 3. **Limit Event Storage**: Clear old events to prevent memory issues
 4. **Use Event Metadata**: Leverage sequence numbers for ordering and deduplication
 5. **Error Boundaries**: Wrap WebSocket components in error boundaries
+6. **Component-Level Filtering**: Use eventFilter to process only relevant events (per ADR-007)
+7. **Type Safety**: Use TypeScript interfaces for event data structures
 
 ## Example: Complete Integration
 

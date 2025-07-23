@@ -126,7 +126,40 @@ Indicate agent progress and state changes.
 }
 ```
 
-### 2. Log Events
+### 2. Workflow Progress Events
+Contain agent-specific progress data and evaluations.
+
+**CriticAgent Evaluation Event:**
+```json
+{
+  "type": "workflow",
+  "data": {
+    "id": "evt_789xyz",
+    "timestamp": "2024-01-20T10:35:00Z",
+    "processId": "proc_abc123",
+    "agentName": "CriticAgent",
+    "type": "workflow",
+    "message": "Critical evaluation completed",
+    "metadata": {
+      "stage": "critical-evaluation",
+      "data": {
+        "evaluation": {
+          "ideaId": "01JAXH123456789ABCDEFGHJ",
+          "criticalAnalysis": "This AI-powered project management solution shows strong potential...",
+          "overallScore": 8.5,
+          "reasoning": {
+            "marketPotential": "The global project management software market is expected to grow...",
+            "technicalFeasibility": "The technical requirements are well within current capabilities...",
+            "competitiveAdvantage": "The AI-driven insights provide a unique differentiator..."
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### 3. Log Events
 Capture console output and detailed agent logs.
 
 ```json
@@ -141,9 +174,10 @@ Capture console output and detailed agent logs.
 }
 ```
 
-### 3. Result Events
+### 4. Result Events
 Contain structured data results from agents.
 
+**IdeationAgent Result Event:**
 ```json
 {
   "type": "workflow",
@@ -154,6 +188,7 @@ Contain structured data results from agents.
     "metadata": {
       "data": {
         "idea": {
+          "id": "01JAXH123456789ABCDEFGHJ",
           "title": "AI-Powered Project Management",
           "description": "...",
           "businessModel": "B2B SaaS",
@@ -174,7 +209,36 @@ Contain structured data results from agents.
 }
 ```
 
-### 4. Chunk Events
+**CompetitorAgent Result Event:**
+```json
+{
+  "type": "workflow",
+  "data": {
+    "type": "result",
+    "message": "Competitor analysis completed",
+    "agentName": "CompetitorAgent",
+    "metadata": {
+      "data": {
+        "analysis": {
+          "ideaId": "01JAXH123456789ABCDEFGHJ",
+          "competitors": [
+            {
+              "name": "Asana",
+              "strengths": ["Market leader", "Strong integrations"],
+              "weaknesses": ["Complex pricing", "Steep learning curve"],
+              "marketShare": 15
+            }
+          ],
+          "marketGaps": ["AI-driven insights", "Predictive analytics"],
+          "differentiators": ["Automated resource allocation", "Risk prediction"]
+        }
+      }
+    }
+  }
+}
+```
+
+### 5. Chunk Events
 For streaming text generation.
 
 ```json
@@ -191,7 +255,7 @@ For streaming text generation.
 }
 ```
 
-### 5. Complete Events
+### 6. Complete Events
 Signal workflow or agent completion.
 
 ```json
@@ -205,7 +269,7 @@ Signal workflow or agent completion.
 }
 ```
 
-### 6. Error Events
+### 7. Error Events
 Report errors during workflow execution.
 
 ```json

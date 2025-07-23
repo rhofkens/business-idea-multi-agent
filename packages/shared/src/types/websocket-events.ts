@@ -10,7 +10,7 @@ export interface WorkflowEvent {
   timestamp: string;
   
   /** Type of event being transmitted */
-  type: 'log' | 'status' | 'error' | 'progress' | 'result';
+  type: 'log' | 'status' | 'error' | 'progress' | 'result' | 'workflow';
   
   /** Name of the agent that generated this event */
   agentName: string;
@@ -32,6 +32,47 @@ export interface WorkflowEvent {
     /** Additional data specific to the event type */
     data?: unknown;
   };
+  
+  /**
+   * Additional data for workflow events
+   * This is used by agents like CriticAgent to send nested evaluation data
+   */
+  data?: {
+    /** Type of workflow data */
+    type?: 'progress' | 'result';
+    
+    /** Metadata for the workflow event */
+    metadata?: {
+      /** Stage of the workflow */
+      stage?: string;
+      
+      /** Nested data containing evaluation results */
+      data?: {
+        /** Evaluation data from CriticAgent */
+        evaluation?: CriticEvaluation;
+        
+        /** Other agent-specific data */
+        [key: string]: unknown;
+      };
+    };
+  };
+}
+
+/**
+ * Evaluation data structure from CriticAgent
+ */
+export interface CriticEvaluation {
+  /** The business idea ID being evaluated */
+  ideaId: string;
+  
+  /** Critical analysis of the business idea */
+  criticalAnalysis: string;
+  
+  /** Overall score for the business idea */
+  overallScore: number;
+  
+  /** Detailed reasoning for the overall score */
+  reasoning?: string;
 }
 
 /**

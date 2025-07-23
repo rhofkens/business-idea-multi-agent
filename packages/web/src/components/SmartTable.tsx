@@ -135,7 +135,14 @@ export function SmartTable({
       blueOceanScore: number;
     }
     
+    interface CriticData {
+      criticalAnalysis: string;
+      overallScore: number;
+      reasoning?: string;
+    }
+    
     const competitorDataMap = new Map<string, CompetitorData>();
+    const criticDataMap = new Map<string, CriticData>();
     const relevantEvents = events.filter(
       (e): e is IdeaWorkflowEvent => {
         // Accept IdeationAgent result events
@@ -146,6 +153,10 @@ export function SmartTable({
         }
         // Accept CompetitorAgent progress events
         if (e.agentName === "CompetitorAgent" && e.type === "progress" && e.metadata?.data) {
+          return true;
+        }
+        // Accept CriticAgent workflow events
+        if (e.agentName === "CriticAgent" && e.type === "progress" && e.metadata?.data) {
           return true;
         }
         return false;
@@ -186,12 +197,66 @@ export function SmartTable({
         } catch (error) {
           console.error('Error processing CompetitorAgent event:', error);
         }
+      } else if (event.agentName === "CriticAgent" && event.type === "progress") {
+        console.log('[SmartTable] Received CriticAgent progress event:', event);
+        try {
+          // Cast metadata.data to include evaluation property
+          const criticData = event.metadata?.data as {
+            evaluation?: {
+              ideaId?: string;
+              criticalAnalysis?: string;
+              overallScore?: number;
+              reasoning?: {
+                [key: string]: string;
+              };
+            };
+            [key: string]: unknown;
+          };
+
+          // Check if this event contains critic evaluation data
+          if (
+            criticData?.evaluation?.ideaId &&
+            criticData?.evaluation?.criticalAnalysis &&
+            typeof criticData?.evaluation?.overallScore === "number"
+          ) {
+            const evaluation = criticData.evaluation;
+            
+            // Extract overall reasoning from the reasoning object
+            const overallReasoning = evaluation.reasoning ?
+              Object.entries(evaluation.reasoning)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n\n') :
+              undefined;
+            
+            // Store the critic evaluation data
+            criticDataMap.set(evaluation.ideaId, {
+              criticalAnalysis: evaluation.criticalAnalysis,
+              overallScore: evaluation.overallScore,
+              reasoning: overallReasoning
+            });
+            console.log('[SmartTable] Stored critic data for idea:', evaluation.ideaId, {
+              criticalAnalysis: evaluation.criticalAnalysis.substring(0, 50) + '...',
+              overallScore: evaluation.overallScore
+            });
+          } else {
+            console.log('[SmartTable] CriticAgent event did not contain valid evaluation data', {
+              hasMetadata: !!event.metadata,
+              hasData: !!event.metadata?.data,
+              hasEvaluation: !!criticData?.evaluation,
+              evaluation: criticData?.evaluation
+            });
+          }
+        } catch (error) {
+          console.error('[SmartTable] Error processing CriticAgent event:', error);
+        }
       }
     }
-    
     console.log('[SmartTable] IdeaMap size:', ideaMap.size);
     console.log('[SmartTable] CompetitorDataMap size:', competitorDataMap.size);
     console.log('[SmartTable] CompetitorDataMap entries:', Array.from(competitorDataMap.entries()));
+    console.log('[SmartTable] CriticDataMap size:', criticDataMap.size);
+    console.log('[SmartTable] CriticDataMap entries:', Array.from(criticDataMap.entries()));
+    
     
     // Merge competitor data with ideas
     ideaMap.forEach((idea, id) => {
@@ -207,6 +272,23 @@ export function SmartTable({
           idea.reasoning.blueOcean = 'Blue Ocean score calculated based on competitor analysis';
         }
         console.log('[SmartTable] Updated idea with competitor data:', idea);
+      }
+    });
+    
+    // Merge critic data with ideas
+    ideaMap.forEach((idea, id) => {
+      console.log('[SmartTable] Checking critic data for idea:', id);
+      const criticData = criticDataMap.get(id);
+      if (criticData) {
+        console.log('[SmartTable] Found critic data for idea:', id, criticData);
+        // Update the idea with critic evaluation data
+        idea.criticalAnalysis = criticData.criticalAnalysis;
+        idea.scores.overall = criticData.overallScore;
+        // Update overall reasoning if provided
+        if (criticData.reasoning) {
+          idea.reasoning.overall = criticData.reasoning;
+        }
+        console.log('[SmartTable] Updated idea with critic data:', idea);
       }
     });
     
