@@ -190,7 +190,9 @@ export class WebSocketCacheEmitter {
           evaluation: {
             ideaId: idea.id,
             ideaTitle: idea.title,
-            overallScore: idea.overallScore
+            overallScore: idea.overallScore,
+            criticalAnalysis: idea.criticalAnalysis,
+            reasoning: idea.reasoning
           }
         }
       })

@@ -390,7 +390,9 @@ export class AgentOrchestrator {
               data: {
                 ideaId: criticallyEvaluatedIdeas[0].id,
                 title: criticallyEvaluatedIdeas[0].title,
-                overallScore: criticallyEvaluatedIdeas[0].overallScore
+                overallScore: criticallyEvaluatedIdeas[0].overallScore,
+                criticalAnalysis: criticallyEvaluatedIdeas[0].criticalAnalysis,
+                reasoning: criticallyEvaluatedIdeas[0].reasoning
               }
             }
           );
