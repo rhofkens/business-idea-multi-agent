@@ -11,7 +11,7 @@ import {
   stitchReportSections,
   getTop3Ideas
 } from '../utils/report-utilities.js';
-import { ensureOutputDirectory, writeFile } from '../utils/file-system.js';
+import { ensureOutputDirectory, ensureDirectory, writeFile } from '../utils/file-system.js';
 import { loggingService } from '../services/logging-service.js';
 
 /**
@@ -233,6 +233,27 @@ Format as markdown.
 }
 
 /**
+ * Saves an individual idea report to a separate file.
+ *
+ * Creates a file in docs/output/ideas/ with the idea's ULID as the filename.
+ * This allows individual ideas to be accessed as they are processed,
+ * before the full report is complete.
+ *
+ * @async
+ * @function saveIndividualIdeaFile
+ * @param {BusinessIdea} idea - The business idea object containing the ULID
+ * @param {string} content - The markdown content for this idea
+ * @returns {Promise<string>} The path where the file was saved
+ * @throws {Error} If file operations fail
+ */
+async function saveIndividualIdeaFile(idea: BusinessIdea, content: string): Promise<string> {
+  const ideaPath = `docs/output/ideas/${idea.id}.md`;
+  await ensureDirectory('docs/output/ideas');
+  await writeFile(ideaPath, content);
+  return ideaPath;
+}
+
+/**
  * Generates the summary and recommendations section for the report.
  *
  * Creates a comprehensive summary including:
@@ -400,6 +421,34 @@ export async function* runDocumentationAgent(
       
       const ideaReport = await generateIdeaReport(idea, i + 1);
       ideaSections.push(ideaReport);
+      
+      // Save individual idea file
+      try {
+        const ideaFilePath = await saveIndividualIdeaFile(idea, ideaReport);
+        
+        loggingService.log({
+          level: 'INFO',
+          message: 'Saved individual idea file',
+          agent: 'Documentation Agent',
+          details: JSON.stringify({
+            ideaId: idea.id,
+            title: idea.title,
+            path: ideaFilePath
+          })
+        });
+      } catch (error) {
+        // Log error but don't fail the entire process
+        loggingService.log({
+          level: 'ERROR',
+          message: 'Failed to save individual idea file',
+          agent: 'Documentation Agent',
+          details: JSON.stringify({
+            ideaId: idea.id,
+            title: idea.title,
+            error: String(error)
+          })
+        });
+      }
       
       yield {
         type: 'idea-processed',
