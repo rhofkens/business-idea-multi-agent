@@ -1,8 +1,11 @@
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Brain, Search, MessageSquare, FileText } from "lucide-react";
+import { useWebSocketContext } from "@/contexts/WebSocketContext";
+import type { WorkflowEvent } from "@business-idea/shared";
 
 interface AgentStatus {
   id: string;
@@ -15,8 +18,9 @@ interface AgentStatus {
 }
 
 interface AgentProgressDashboardProps {
-  agents: AgentStatus[];
   className?: string;
+  // Allow passing initial agents state, useful for testing
+  initialAgents?: AgentStatus[];
 }
 
 const statusConfig = {
@@ -61,10 +65,188 @@ const defaultAgents: AgentStatus[] = [
   },
 ];
 
-export function AgentProgressDashboard({ 
-  agents = defaultAgents, 
-  className 
+export function AgentProgressDashboard({
+  className,
+  initialAgents = defaultAgents
 }: AgentProgressDashboardProps) {
+  const [agents, setAgents] = useState<AgentStatus[]>(initialAgents);
+  const workflowStartedRef = useRef(false);
+  
+  // Use WebSocket hook to get real-time events
+  const {
+    events: wsEvents,
+    isConnected,
+    subscribe,
+    unsubscribe
+  } = useWebSocketContext();
+
+  // Subscribe to all agents on mount
+  useEffect(() => {
+    const agentNames = ['IdeationAgent', 'CompetitorAgent', 'CriticAgent', 'DocumentationAgent'];
+    
+    agentNames.forEach(agent => subscribe(agent));
+
+    return () => {
+      agentNames.forEach(agent => unsubscribe(agent));
+    };
+  }, [subscribe, unsubscribe]);
+
+  // Update agent status when the workflow starts
+  useEffect(() => {
+    const startEvent = wsEvents.find(event =>
+      event.type === 'status' &&
+      event.message.includes('Starting business idea generation')
+    );
+    
+    if (startEvent) {
+      workflowStartedRef.current = true;
+      setAgents(prev => prev.map(agent => ({
+        ...agent,
+        status: 'idle',
+        progress: 0,
+        currentTask: undefined
+      })));
+    }
+  }, [wsEvents]);
+
+  // Handle IdeationAgent progress events
+  useEffect(() => {
+    const ideationEvents = wsEvents.filter(event =>
+      event.agentName === 'IdeationAgent' &&
+      event.type === 'result' &&
+      event.message.includes('Refined')
+    );
+
+    if (ideationEvents.length > 0) {
+      const latestEvent = ideationEvents[ideationEvents.length - 1];
+      const eventData = latestEvent.metadata?.data as { refinedIdeaCount?: number };
+      const refinedCount = eventData?.refinedIdeaCount || ideationEvents.length;
+      
+      setAgents(prev => prev.map(agent => {
+        if (agent.id === 'ideation') {
+          const newProgress = Math.min(refinedCount, 10);
+          return {
+            ...agent,
+            progress: newProgress,
+            status: newProgress >= 10 ? 'completed' : 'active',
+            currentTask: newProgress >= 10
+              ? 'Completed - Generated 10 ideas'
+              : `Refining idea ${refinedCount}/10`
+          };
+        }
+        return agent;
+      }));
+    }
+  }, [wsEvents]);
+
+  // Handle CompetitorAgent progress events
+  useEffect(() => {
+    // Only process events if workflow has started
+    if (!workflowStartedRef.current) return;
+    
+    const competitorEvents = wsEvents.filter(event =>
+      event.agentName === 'CompetitorAgent' &&
+      event.type === 'progress' &&
+      event.metadata?.progress !== undefined
+    );
+
+    if (competitorEvents.length > 0) {
+      const latestEvent = competitorEvents[competitorEvents.length - 1];
+      const progress = latestEvent.metadata.progress as number;
+      const eventData = latestEvent.metadata.data as { 
+        totalIdeas?: number; 
+        analysis?: { ideaTitle?: string } 
+      };
+      const currentIdea = Math.ceil((progress / 100) * (eventData?.totalIdeas || 10));
+      
+      setAgents(prev => prev.map(agent => {
+        if (agent.id === 'competitor') {
+          return {
+            ...agent,
+            progress: progress / 10,  // Convert percentage to 0-10 scale
+            status: progress >= 100 ? 'completed' : 'active',
+            currentTask: progress >= 100
+              ? 'Completed - Analyzed all competitors'
+              : `Analyzing competitors for idea ${currentIdea}/${eventData?.totalIdeas || 10}: ${eventData?.analysis?.ideaTitle || 'Unknown'}`
+          };
+        }
+        return agent;
+      }));
+    }
+  }, [wsEvents]);
+
+  // Handle CriticAgent progress events
+  useEffect(() => {
+    // Only process events if workflow has started
+    if (!workflowStartedRef.current) return;
+    
+    const criticEvents = wsEvents.filter(event =>
+      event.agentName === 'CriticAgent' &&
+      event.type === 'progress' &&
+      event.metadata?.progress !== undefined
+    );
+
+    if (criticEvents.length > 0) {
+      const latestEvent = criticEvents[criticEvents.length - 1];
+      const progress = latestEvent.metadata.progress as number;
+      const eventData = latestEvent.metadata.data as {
+        totalIdeas?: number;
+        analysis?: { ideaTitle?: string }
+      };
+      const currentIdea = Math.ceil((progress / 100) * (eventData?.totalIdeas || 10));
+      
+      setAgents(prev => prev.map(agent => {
+        if (agent.id === 'critic') {
+          return {
+            ...agent,
+            progress: progress / 10,  // Convert percentage to 0-10 scale
+            status: progress >= 100 ? 'completed' : 'active',
+            currentTask: progress >= 100
+              ? 'Completed - Analyzed all ideas critically'
+              : `Critically analyzing idea ${currentIdea}/${eventData?.totalIdeas || 10}: ${eventData?.analysis?.ideaTitle || 'Unknown'}`
+          };
+        }
+        return agent;
+      }));
+    }
+  }, [wsEvents]);
+
+  // Handle DocumentationAgent progress events
+  useEffect(() => {
+    // Only process events if workflow has started
+    if (!workflowStartedRef.current) return;
+    
+    const documentationEvents = wsEvents.filter(event =>
+      event.agentName === 'DocumentationAgent' &&
+      event.type === 'progress' &&
+      event.metadata?.progress !== undefined
+    );
+
+    if (documentationEvents.length > 0) {
+      const latestEvent = documentationEvents[documentationEvents.length - 1];
+      const progress = latestEvent.metadata.progress as number;
+      const eventData = latestEvent.metadata.data as {
+        totalIdeas?: number;
+        analysis?: { ideaTitle?: string }
+      };
+      const currentIdea = Math.ceil((progress / 100) * (eventData?.totalIdeas || 10));
+      
+      setAgents(prev => prev.map(agent => {
+        if (agent.id === 'documentation') {
+          return {
+            ...agent,
+            progress: progress / 10,  // Convert percentage to 0-10 scale
+            status: progress >= 100 ? 'completed' : 'active',
+            currentTask: progress >= 100
+              ? 'Completed - Generated all documentation'
+              : `Documenting idea ${currentIdea}/${eventData?.totalIdeas || 10}: ${eventData?.analysis?.ideaTitle || 'Unknown'}`
+          };
+        }
+        return agent;
+      }));
+    }
+  }, [wsEvents]);
+
   return (
     <Card className={cn("shadow-elegant", className)}>
       <CardHeader>

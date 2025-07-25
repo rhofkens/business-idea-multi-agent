@@ -31,7 +31,6 @@ interface AgentStatus {
 const Index = () => {
   const { user, logout, isLoading } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [agents, setAgents] = useState<AgentStatus[]>([]);
   const [selectedReport, setSelectedReport] = useState<BusinessIdea | null>(null);
 
   const handleFormSubmit = async (formData: FormData) => {
@@ -102,7 +101,7 @@ const Index = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-6">
-                <AgentProgressDashboard agents={agents} />
+                <AgentProgressDashboard />
               </div>
               <div className="space-y-6">
                 <TerminalOutput isActive={isGenerating} />
