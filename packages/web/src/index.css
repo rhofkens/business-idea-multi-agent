@@ -88,6 +88,22 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Prose colors for markdown content */
+    --prose-body: var(--foreground);
+    --prose-headings: var(--foreground);
+    --prose-links: var(--primary);
+    --prose-bold: var(--foreground);
+    --prose-counters: var(--muted-foreground);
+    --prose-bullets: var(--muted-foreground);
+    --prose-hr: var(--border);
+    --prose-quotes: var(--foreground);
+    --prose-quote-borders: var(--border);
+    --prose-code: var(--foreground);
+    --prose-pre-code: var(--foreground);
+    --prose-pre-bg: var(--muted);
+    --prose-th-borders: var(--border);
+    --prose-td-borders: var(--border);
   }
 
   .dark {
@@ -172,4 +188,200 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Enhanced Markdown Prose Styles */
+.prose {
+  color: var(--prose-body);
+  max-width: none;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--prose-headings);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.8);
+  padding-bottom: 0.5rem;
+  width: 100%;
+}
+
+.prose h1:first-child,
+.prose h2:first-child,
+.prose h3:first-child {
+  margin-top: 0;
+}
+
+.prose h1 {
+  font-size: 1.875rem;
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+}
+
+.prose h4 {
+  font-size: 1.125rem;
+}
+
+.prose h5 {
+  font-size: 1rem;
+}
+
+.prose h6 {
+  font-size: 0.875rem;
+}
+
+.prose p {
+  margin-bottom: 1rem;
+  line-height: 1.75;
+}
+
+.prose strong {
+  color: var(--prose-bold);
+  font-weight: 700;
+}
+
+.prose a {
+  color: var(--prose-links);
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.prose a:hover {
+  opacity: 0.8;
+}
+
+.prose ul,
+.prose ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose ul ul,
+.prose ol ol,
+.prose ul ol,
+.prose ol ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
+  line-height: 1.75;
+}
+
+.prose li::marker {
+  color: var(--prose-bullets);
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--prose-quote-borders);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--prose-quotes);
+}
+
+.prose hr {
+  border-color: var(--prose-hr);
+  margin: 2rem 0;
+}
+
+.prose code {
+  background-color: var(--prose-pre-bg);
+  color: var(--prose-code);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.prose pre {
+  background-color: var(--prose-pre-bg);
+  color: var(--prose-pre-code);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  line-height: 1.5;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.prose th {
+  border-bottom: 2px solid var(--prose-th-borders);
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 700;
+}
+
+.prose td {
+  border-bottom: 1px solid var(--prose-td-borders);
+  padding: 0.75rem;
+}
+
+.prose table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ensure proper spacing between elements */
+.prose > * + * {
+  margin-top: 1rem;
+}
+
+/* Dark mode adjustments */
+.dark .prose {
+  color: var(--prose-body);
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  color: var(--prose-headings);
+}
+
+.dark .prose strong {
+  color: var(--prose-bold);
+}
+
+.dark .prose code {
+  background-color: var(--prose-pre-bg);
+  color: var(--prose-code);
+}
+
+.dark .prose pre {
+  background-color: var(--prose-pre-bg);
+  color: var(--prose-pre-code);
 }

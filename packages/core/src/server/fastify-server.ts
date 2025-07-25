@@ -6,6 +6,7 @@ import { authRoutes } from '../routes/auth-routes.js';
 import { registerPreferencesRoutes } from '../routes/preferences-routes.js';
 import websocketPlugin from '../plugins/websocket-plugin.js';
 import { websocketRoute } from '../routes/websocket-route.js';
+import documentationRoutes from '../routes/documentation-routes.js';
 
 /**
  * Creates and configures a Fastify server instance with necessary plugins
@@ -73,6 +74,9 @@ export async function createFastifyServer(): Promise<FastifyInstance> {
   
   // Register preferences routes
   await fastify.register(registerPreferencesRoutes, { prefix: '/api' });
+  
+  // Register documentation routes
+  await fastify.register(documentationRoutes);
   
   // Register WebSocket routes (no prefix, uses /ws directly)
   await fastify.register(websocketRoute);

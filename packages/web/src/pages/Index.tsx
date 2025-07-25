@@ -98,7 +98,6 @@ const Index = () => {
             <div className="w-full">
               <SmartTable
                 isActive={isGenerating}
-                onViewReport={handleViewReport}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

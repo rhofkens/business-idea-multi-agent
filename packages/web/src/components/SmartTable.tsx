@@ -47,9 +47,10 @@ import type { BusinessIdea } from "@/types/business-idea";
 import { businessIdeaSchema, type WorkflowEvent } from "@business-idea/shared";
 import { z } from "zod";
 import "@/styles/smart-table.css";
+import { useDocumentationViewer } from '@/hooks/useDocumentationViewer';
+import { MarkdownViewerModal } from './MarkdownViewerModal';
 
 interface SmartTableProps {
-  onViewReport?: (idea: BusinessIdea) => void;
   className?: string;
   isActive: boolean;
 }
@@ -95,28 +96,36 @@ const truncateText = (text: string, length: number = 100) => {
 };
 
 export function SmartTable({
-  onViewReport,
   className,
   isActive,
 }: SmartTableProps) {
   const [showCurrentRun, setShowCurrentRun] = useState(true);
   const [starredIdeas, setStarredIdeas] = useState<Set<string>>(new Set());
   const [newIdeaIds, setNewIdeaIds] = useState<Set<string>>(new Set());
+  const [consolidatedReportEnabled, setConsolidatedReportEnabled] = useState(false);
+  const [consolidatedReportPath, setConsolidatedReportPath] = useState<string | null>(null);
   const prevIdeasRef = useRef<BusinessIdea[]>([]);
 
   const { events, subscribe, unsubscribe, clearEvents } = useWebSocketContext();
+  const { isOpen, content, isLoading: docLoading, error: docError, openDocumentation, closeDocumentation } = useDocumentationViewer();
   
-  // Subscribe to the IdeationAgent and CompetitorAgent when the component is active
+  // Subscribe to the IdeationAgent, CompetitorAgent, CriticAgent, and DocumentationAgent when the component is active
   useEffect(() => {
     if (isActive) {
       subscribe("IdeationAgent");
       subscribe("CompetitorAgent");
-      // When a new generation starts, we should clear out the old ideas
+      subscribe("CriticAgent");
+      subscribe("DocumentationAgent");
+      // When a new generation starts, we should clear out the old ideas and reset consolidated report state
       clearEvents();
+      setConsolidatedReportPath(null);
+      setConsolidatedReportEnabled(false);
     }
     return () => {
       unsubscribe("IdeationAgent");
       unsubscribe("CompetitorAgent");
+      unsubscribe("CriticAgent");
+      unsubscribe("DocumentationAgent");
     };
   }, [isActive, subscribe, unsubscribe, clearEvents]);
   
@@ -141,8 +150,13 @@ export function SmartTable({
       reasoning?: string;
     }
     
+    interface DocumentationData {
+      reportPath: string;
+    }
+    
     const competitorDataMap = new Map<string, CompetitorData>();
     const criticDataMap = new Map<string, CriticData>();
+    const documentationDataMap = new Map<string, DocumentationData>();
     const relevantEvents = events.filter(
       (e): e is IdeaWorkflowEvent => {
         // Accept IdeationAgent result events
@@ -157,6 +171,14 @@ export function SmartTable({
         }
         // Accept CriticAgent workflow events
         if (e.agentName === "CriticAgent" && e.type === "progress" && e.metadata?.data) {
+          return true;
+        }
+        // Accept DocumentationAgent progress events (individual idea documentation updates)
+        if (e.agentName === "DocumentationAgent" && e.type === "progress" && e.metadata?.data) {
+          return true;
+        }
+        // Accept DocumentationAgent result event (complete documentation workflow finished)
+        if (e.agentName === "DocumentationAgent" && e.type === "result" && e.metadata?.data) {
           return true;
         }
         return false;
@@ -249,6 +271,53 @@ export function SmartTable({
         } catch (error) {
           console.error('[SmartTable] Error processing CriticAgent event:', error);
         }
+      } else if (event.agentName === "DocumentationAgent") {
+        console.log('[SmartTable] Received DocumentationAgent event:', event.type, event);
+        try {
+          if (event.type === "progress") {
+            // Parse DocumentationAgent progress events - contains individual idea documentation paths
+            const progressData = event.metadata?.data as {
+              ideaId?: string;
+              index?: number;
+              total?: number;
+              title?: string;
+              reportPath?: string;
+              [key: string]: unknown;
+            };
+            
+            // Store the individual report path for each idea
+            if (progressData?.ideaId) {
+              console.log('[SmartTable] DocumentationAgent progress:', progressData.ideaId, `${progressData.index}/${progressData.total}`, progressData.title, 'reportPath:', progressData.ideaId, '.md');
+              
+              // Map the reportPath to the idea ID
+              documentationDataMap.set(progressData.ideaId, {
+                reportPath: progressData.ideaId
+              });
+              
+              console.log('[SmartTable] Stored documentation path for idea:', progressData.ideaId);
+            }
+          } else if (event.type === "result") {
+            // Parse DocumentationAgent result events - contains the consolidated report path
+            const resultData = event.metadata?.data as {
+              reportPath?: string;
+              ideasProcessed?: number;
+              processingTime?: number;
+              [key: string]: unknown;
+            };
+            // DocumentationAgent creates ONE consolidated report for ALL ideas
+            if (resultData?.reportPath) {
+              console.log('[SmartTable] DocumentationAgent result - consolidated report path:', resultData.reportPath);
+              
+              // Enable the consolidated report button and store the path (stripping .md extension for consistency)
+              setConsolidatedReportEnabled(true);
+              const pathWithoutExtension = resultData.reportPath.replace(/\.md$/, '');
+              setConsolidatedReportPath(pathWithoutExtension);
+              console.log('[SmartTable] Consolidated report ready at:', pathWithoutExtension);
+            }
+          }
+        } catch (error) {
+          console.error('[SmartTable] Error processing DocumentationAgent event:', error);
+        }
       }
     }
     console.log('[SmartTable] IdeaMap size:', ideaMap.size);
@@ -256,6 +325,8 @@ export function SmartTable({
     console.log('[SmartTable] CompetitorDataMap entries:', Array.from(competitorDataMap.entries()));
     console.log('[SmartTable] CriticDataMap size:', criticDataMap.size);
     console.log('[SmartTable] CriticDataMap entries:', Array.from(criticDataMap.entries()));
+    console.log('[SmartTable] DocumentationDataMap size:', documentationDataMap.size);
+    console.log('[SmartTable] DocumentationDataMap entries:', Array.from(documentationDataMap.entries()));
     
     
     // Merge competitor data with ideas
@@ -291,6 +362,18 @@ export function SmartTable({
         console.log('[SmartTable] Updated idea with critic data:', idea);
       }
     });
+    // Merge documentation data with ideas
+    ideaMap.forEach((idea, id) => {
+      console.log('[SmartTable] Checking documentation data for idea:', id);
+      const documentationData = documentationDataMap.get(id);
+      if (documentationData) {
+        console.log('[SmartTable] Found documentation data for idea:', id, documentationData);
+        // Update the idea with documentation report path
+        idea.reportPath = documentationData.reportPath;
+        console.log('[SmartTable] Updated idea with documentation data:', idea);
+      }
+    });
+    
     
     // Add starring status from local state
     const ideasWithStars = Array.from(ideaMap.values()).map(idea => ({
@@ -314,9 +397,11 @@ export function SmartTable({
 
   const isStreaming = useMemo(() => {
     // Streaming is true if the process is active and we haven't received a final status event.
-    const statusEvents = events.filter(e => e.agentName === 'IdeationAgent' && e.type === 'status');
+    const statusEvents = events.filter(e => e.agentName === 'Orchestrator' && e.type === 'status');
     const lastStatus = statusEvents[statusEvents.length - 1];
-    return isActive && lastStatus?.message !== 'Ideation complete.';
+    console.log('[SmartTable] Orchestrator status event found, testing for completion message', lastStatus);
+    console.log('[SmartTable] Received last event, returning streaming status');
+    return isActive && lastStatus?.message !== '✅ Agent chain completed successfully!';
   }, [events, isActive]);
 
 
@@ -354,6 +439,22 @@ export function SmartTable({
   const filteredIdeas = ideas.filter(idea =>
     showCurrentRun ? idea.isCurrentRun : true
   );
+
+  const handleViewConsolidatedReport = () => {
+    console.log('[SmartTable] View consolidated report clicked');
+    if (!consolidatedReportPath) {
+      console.error('[SmartTable] No consolidated report path available');
+      return;
+    }
+
+    // Extract the filename (ID) from the full path
+    // Note: .md extension already stripped when storing the path
+    const pathParts = consolidatedReportPath.split('/');
+    const reportId = pathParts[pathParts.length - 1];
+    
+    console.log('[SmartTable] Opening consolidated report:', reportId);
+    openDocumentation(reportId);
+  };
 
   if (loading) {
     return (
@@ -401,7 +502,8 @@ export function SmartTable({
   };
 
   return (
-    <Card className={cn("shadow-elegant", className)}>
+    <>
+      <Card className={cn("shadow-elegant", className)}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -409,6 +511,16 @@ export function SmartTable({
             <Badge variant="secondary" className={cn("ml-2", isStreaming && "isStreaming-pulse")}>
               {filteredIdeas.length} ideas
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleViewConsolidatedReport}
+              disabled={!consolidatedReportEnabled}
+              className="ml-2"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              View consolidated report
+            </Button>
           </CardTitle>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -478,7 +590,13 @@ export function SmartTable({
                     <TableCell><TooltipProvider><Tooltip><TooltipTrigger asChild><div className="text-xs cursor-help">{truncateText(idea.competitorAnalysis || "Analysis pending...")}</div></TooltipTrigger><TooltipContent className="max-w-md"><p>{idea.competitorAnalysis || "Competitor analysis is being generated..."}</p></TooltipContent></Tooltip></TooltipProvider></TableCell>
                     <TableCell><TooltipProvider><Tooltip><TooltipTrigger asChild><div className="text-xs cursor-help">{truncateText(idea.criticalAnalysis || "Analysis pending...")}</div></TooltipTrigger><TooltipContent className="max-w-md"><p>{idea.criticalAnalysis || "Critical analysis is being generated..."}</p></TooltipContent></Tooltip></TooltipProvider></TableCell>
                     <TableCell>
-                      <Button variant={idea.reportPath ? "outline" : "ghost"} size="sm" onClick={() => onViewReport && onViewReport(idea)} disabled={!idea.reportPath} className="h-8">
+                      <Button
+                        variant={idea.reportPath ? "outline" : "ghost"}
+                        size="sm"
+                        onClick={() => openDocumentation(idea.id)}
+                        disabled={!idea.reportPath || docLoading}
+                        className="h-8"
+                      >
                         <FileText className="h-3 w-3 mr-1" />
                         {idea.reportPath ? "View" : "Pending"}
                       </Button>
@@ -503,5 +621,13 @@ export function SmartTable({
         </div>
       </CardContent>
     </Card>
+    
+    <MarkdownViewerModal
+      isOpen={isOpen}
+      title="Business Idea Documentation"
+      content={content}
+      onClose={closeDocumentation}
+    />
+    </>
   );
 }

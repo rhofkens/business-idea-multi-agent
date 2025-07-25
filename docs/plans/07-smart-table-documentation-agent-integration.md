@@ -1,187 +1,217 @@
-# Increment 7: Smart Table - Documentation Agent Integration
+# Step 7: Smart Table Documentation Agent Integration
 
-## 1. Detailed Scope
+## Detailed Scope
 
-### Features and User Stories to Implement
+### Features to Implement
+1. **Documentation Generation Integration**
+   - Add "View Documentation" link for each business idea row
+   - Implement modal dialog to display individual idea documentation using MD viewer
+   - Integrate with DocumentationAgent workflow results via REST API
 
-1. **Documentation Agent WebSocket Integration**
-   - Implement WebSocket handlers for documentation agent events
-   - Create event streaming for individual idea summaries
-   - Handle section-generated events with idea-specific content
+2. **Real-time Documentation Progress**
+   - Subscribe to existing DocumentationAgent WebSocket events (already sent by orchestrator)
+   - Handle progress events showing section generation status
+   - Handle result events indicating complete report availability
+   - Display documentation generation progress messages
 
-2. **SmartTable Summary Column Enhancement**
-   - Add summary column to display idea-specific documentation
-   - Show real-time updates as summaries are generated
-   - Display summary content inline in the table row
+3. **Full Report Access**
+   - Add "Show Full Report" button in SmartTable header
+   - Enable button only after receiving DocumentationAgent result event
+   - Display complete documentation report in modal with MD viewer
+   - Parse file path from result event to identify report location
 
-3. **Complete Report Button**
-   - Add "View Complete Report" button to table header
-   - Show button only when documentation is complete
-   - Link to full generated report document
+4. **UI State Management**
+   - Halt "Analysis in progress" spinner at bottom of table when documentation completes
+   - Reset "Generate Ideas" button state back to normal after documentation
+   - Show appropriate progress indicators during documentation generation
 
-### Technical Implementation Details
+### Technical Implementation
+1. **WebSocket Event Handling**
+   - Listen for `progress` and `result` events for DocumentationAgent (the WebSocket handler unwraps the workflow wrapper)
+   - Handle two event types:
+     - **Progress events**: Show section generation progress
+       ```typescript
+       {
+         id: "uuid",
+         timestamp: "ISO-date",
+         type: "progress",
+         agentName: "DocumentationAgent",
+         level: "info",
+         message: "📝 Generated section: Risk Assessment",
+         metadata: {
+           stage: "section-generation",
+           data: { section: "Risk Assessment" }
+         }
+       }
+       ```
+     - **Result events**: Indicate complete report is ready (with file path)
+   - Use same pattern as CriticAgent and CompetitorAgent implementations in SmartTable
 
-1. **Backend (packages/server)**
-   - WebSocket event handlers for:
-     - `type: 'status'` - General status messages
-     - `type: 'section-generated'` - Individual idea summary with content
-     - `type: 'complete'` - Final completion with report path
-   - Event structure for section-generated:
-     ```typescript
-     interface SectionGeneratedEvent {
-       type: 'section-generated';
-       ideaId: string;      // Maps to specific table row
-       summary: string;     // Idea-specific summary content
-       section: string;     // Section identifier
-     }
-     ```
+2. **Frontend Components**
+   - Extend SmartTable component with documentation column
+   - Create MD viewer modal component for displaying documentation
+   - Add "Show Full Report" button in table header
+   - Show documentation progress indicators
 
-2. **Frontend (packages/web)**
-   - Add summary column to SmartTable
-   - Handle section-generated events to update specific rows
-   - Add "View Complete Report" button to table header
-   - Show/hide button based on documentation completion
+3. **REST API Endpoints**
+   - Create new GET endpoints:
+     - `/api/documentation/:ulid` - Get individual idea documentation by ULID
+     - `/api/documentation/report/:filename` - Get full report by filename
+   - Handle large content appropriately (documentation can be quite big)
+   - Return markdown content with proper headers
+   - Implement error handling for missing documentation
 
-3. **Integration with Existing Workflow**
-   - Documentation agent processes each idea individually
-   - Emits summary for each idea as it's processed
-   - Generates complete report after all ideas processed
-   - Report combines all individual summaries
+4. **State Management**
+   - Track documentation generation progress based on progress events
+   - Enable "Show Full Report" button upon receiving result event
+   - Reset UI states (spinner, button) when documentation completes
+   - Handle loading and error states for REST API calls
 
-### Key Technical Considerations
+### Integration Points
+- Existing WebSocket connection (events unwrapped by handler)
+- SmartTable filters for DocumentationAgent progress/result events
+- New REST API endpoints for retrieving documentation content
+- MD viewer modal component for displaying documentation
 
-1. **Individual Idea Updates**
-   - Each idea gets its own summary via WebSocket
-   - Summary content is displayed in the table row
-   - Real-time updates as agent processes ideas
+### Exclusions
+- Documentation content editing capabilities
+- PDF export functionality
+- Documentation versioning
+- Offline documentation access
+- WebSocket content streaming (all content retrieved via REST API)
 
-2. **Event Flow**
-   - Agent generates summary for each idea
-   - Emits section-generated event with ideaId and content
-   - Frontend updates specific table row with summary
-   - Complete event signals full report availability
+## Detailed Acceptance Criteria
 
-3. **UI Layout**
-   - New summary column in SmartTable
-   - Inline display of summary content
-   - Header button for complete report access
+### WebSocket Event Handling
+1. **Progress Event Reception**
+   - SmartTable receives DocumentationAgent progress events
+   - Progress messages display in appropriate UI location
+   - Each section generation event updates the UI
+   - Messages show which section is being generated
 
-### Exclusions from This Increment
-- Editing individual summaries
-- Downloading individual idea summaries
-- Report customization or templating
-- Summary length configuration
+2. **Result Event Processing**
+   - Result event triggers UI state changes
+   - "Show Full Report" button becomes enabled
+   - "Analysis in progress" spinner stops
+   - "Generate Ideas" button returns to normal state
+   - File path is extracted from result event for later retrieval
 
-## 2. Detailed Acceptance Criteria
+### REST API Integration
+1. **Individual Documentation Endpoint**
+   - GET `/api/documentation/:ulid` returns markdown content
+   - Returns 404 if documentation not found
+   - Handles large content efficiently
+   - Proper content-type headers
 
-### Backend Requirements
+2. **Full Report Endpoint**
+   - GET `/api/documentation/report/:filename` returns full report
+   - Filename parsed from result event
+   - Returns complete markdown report
+   - Error handling for invalid filenames
 
-1. **WebSocket Event Streaming**
-   - ✓ Documentation agent emits section-generated events for each idea
-   - ✓ Each event includes ideaId and summary content
-   - ✓ Events are emitted as ideas are processed
-   - ✓ Complete event includes generated report path
+### UI Components
+1. **View Documentation Links**
+   - Each table row shows "View Documentation" when available
+   - Link opens MD viewer modal
+   - Modal displays markdown content properly formatted
+   - Modal can be closed easily
 
-2. **Event Structure**
-   - ✓ Section-generated events contain valid ideaId
-   - ✓ Summary content is properly formatted
-   - ✓ Events are sent in processing order
-   - ✓ No duplicate events for same idea
+2. **Show Full Report Button**
+   - Button appears in SmartTable header
+   - Initially disabled or hidden
+   - Enabled after receiving result event
+   - Opens full report in MD viewer modal
 
-3. **Agent Integration**
-   - ✓ Documentation agent receives all analyzed ideas
-   - ✓ Processes ideas sequentially or in parallel
-   - ✓ Generates meaningful summaries for each idea
-   - ✓ Creates complete report after all summaries
+3. **Progress Indicators**
+   - Documentation progress visible during generation
+   - "Analysis in progress" spinner at table bottom
+   - Spinner stops when documentation completes
+   - Clear visual feedback for all states
 
-### Frontend Requirements
+4. **Button State Management**
+   - "Generate Ideas" button disabled during analysis
+   - Button returns to normal after documentation completes
+   - Proper transitions between states
+   - No stuck states or UI glitches
 
-1. **SmartTable Summary Column**
-   - ✓ New column displays "Pending" initially
-   - ✓ Updates to show summary when received
-   - ✓ Summary text is readable and well-formatted
-   - ✓ Column has appropriate width and styling
+### Technical Requirements
+1. **Event Flow**
+   - SmartTable subscribes to WebSocket events (unwrapped by handler)
+   - Filters for DocumentationAgent progress and result events
+   - Processes progress and result events differently
+   - Updates UI based on event type
 
-2. **Real-time Updates**
-   - ✓ Individual rows update as events arrive
-   - ✓ No lag or flickering during updates
-   - ✓ Summaries appear immediately upon receipt
-   - ✓ All ideas eventually show summaries
+2. **Error Handling**
+   - Handle missing documentation gracefully
+   - Show error states in UI
+   - Retry logic for failed API calls
+   - User-friendly error messages
 
-3. **Complete Report Button**
-   - ✓ Button appears in table header area
-   - ✓ Initially hidden or disabled
-   - ✓ Enables when documentation completes
-   - ✓ Opens full report in new tab/window
-
-### Integration Requirements
-
-1. **End-to-End Flow**
-   - ✓ Critic completion triggers documentation
-   - ✓ Each idea receives individual summary
-   - ✓ Table rows update in real-time
-   - ✓ Complete report available at end
-
-2. **Data Consistency**
-   - ✓ Summaries match idea content
-   - ✓ All ideas included in final report
-   - ✓ No missing or mismatched summaries
-   - ✓ Report contains all individual summaries
-
-## 3. Detailed Documentation Tasks
+## Detailed Documentation Tasks
 
 ### Code Documentation
 1. **Backend Documentation**
-   - Document section-generated event structure
-   - Add JSDoc for summary generation logic
-   - Document the event emission flow
-   - Include example event payloads
+   - Document new REST API endpoints
+   - Add JSDoc for documentation retrieval logic
+   - Document error response formats
+   - Include example API responses
 
 2. **Frontend Documentation**
-   - Document summary column implementation
-   - Add comments for event handling logic
-   - Document complete report button behavior
-   - Update SmartTable props documentation
-
-### User Documentation
-1. **Feature Documentation**
-   - Add "Documentation Summaries" section to user guide
-   - Explain how summaries appear in the table
-   - Document the complete report button
-   - Include screenshots of summary display
+   - Document WebSocket event handling for DocumentationAgent
+   - Add comments for MD viewer modal implementation
+   - Document button state management logic
+   - Update SmartTable component documentation
 
 ### API Documentation
-1. **WebSocket Events**
-   - Document section-generated event format
-   - Provide example payloads with summaries
-   - Document the ideaId mapping requirement
-   - Include timing and ordering details
+1. **REST Endpoints**
+   - Document `/api/documentation/:ulid` endpoint
+   - Document `/api/documentation/report/:filename` endpoint
+   - Include request/response examples
+   - Document error codes and responses
+
+2. **WebSocket Events**
+   - Document DocumentationAgent event formats (progress and result)
+   - Note that the WebSocket handler unwraps the workflow wrapper
+   - Include example event payloads
+   - Document event flow and timing
+
+### User Documentation
+1. **Feature Guide**
+   - Add "Viewing Documentation" section
+   - Explain how to access individual idea docs
+   - Document full report access
+   - Include screenshots of MD viewer
 
 ### Architecture Updates
 1. **Update architecture.md**
-   - Add documentation agent summary flow
-   - Document individual vs complete report
-   - Update event flow diagrams
-   - Include summary display architecture
+   - Add documentation retrieval flow
+   - Document REST API endpoints
+   - Update WebSocket event flow diagram
+   - Note separation of event streaming and content retrieval
 
 ## Implementation Notes
 
-### Summary Display Approach
-Based on the clarification, the documentation agent:
-- Generates a summary for each individual idea
-- Sends summaries via WebSocket with idea IDs
-- Updates table rows in real-time
-- Creates a complete report combining all summaries
+### Key Technical Decisions
+1. **Content Delivery**
+   - WebSocket events don't include content (too large)
+   - Content retrieved via REST API on demand
+   - Efficient handling of large markdown documents
 
-### UI Changes Required
-- Add summary column to SmartTable component
-- Implement "View Complete Report" button in header
-- Handle section-generated events in WebSocket listener
-- Update table state with incoming summaries
+2. **UI State Coordination**
+   - Three UI elements coordinated by result event:
+     - "Show Full Report" button enablement
+     - "Analysis in progress" spinner halt
+     - "Generate Ideas" button reset
 
-### Event Handling
-The key difference from the original plan:
-- Focus on individual idea summaries, not just report status
-- Each idea gets its own content update
-- Complete report is secondary to individual summaries
-- Real-time row updates as summaries are generated
+3. **Event Integration**
+   - Leverage existing WebSocket event pattern from CriticAgent/CompetitorAgent
+   - WebSocket handler automatically unwraps workflow wrapper
+   - Frontend listens for progress and result events
+
+### Implementation Order
+1. Create REST API endpoints for documentation retrieval
+2. Add WebSocket event handlers in SmartTable
+3. Implement MD viewer modal component
+4. Add "View Documentation" links to table rows
+5. Implement "Show Full Report" button
+6. Coordinate UI state changes on result event
