@@ -4,7 +4,7 @@ export const businessIdeaSchema = z.object({
   id: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/, 'Invalid ULID format'),
   title: z.string(),
   description: z.string(),
-  businessModel: z.enum(['B2B', 'B2C', 'B2B2C', 'Marketplace', 'SaaS', 'DTC']),
+  businessModel: z.string(),
   disruptionPotential: z.number().min(1).max(10),
   marketPotential: z.number().min(1).max(10),
   technicalComplexity: z.number().min(1).max(10),

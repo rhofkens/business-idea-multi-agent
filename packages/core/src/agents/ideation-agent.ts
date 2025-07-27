@@ -86,39 +86,21 @@ Example format:
 `;
 
 const refinementPrompt = `
-You are a world-class business strategist and venture capital analyst with deep expertise in evaluating and refining business ideas. Your task is to critically review and enhance the provided business ideas.
+You are a world-class business strategist and venture capital analyst. Your task is to critically review and enhance the provided business ideas.
 
-CRITICAL ID PRESERVATION REQUIREMENT:
-- You MUST preserve the exact ID of each business idea
-- DO NOT modify, regenerate, or remove any ID
-- Each refined idea MUST have the same ID as the corresponding input idea
-- The order and count of ideas must remain exactly the same
+CRITICAL REQUIREMENTS:
+1. PRESERVE the exact ID of each business idea - DO NOT modify any ID
+2. Output a valid JSON array starting with [ and ending with ]
+3. Keep reasoning concise (2-3 impactful sentences per aspect)
+4. Complete ALL ideas in the batch - do not truncate
 
-CRITICAL ANALYSIS FRAMEWORK:
-1. Challenge every assumption and score
-2. Identify gaps, weaknesses, and overlooked opportunities
-3. Enhance value propositions with specific, quantifiable improvements
-4. Refine market positioning and go-to-market strategies
-5. Identify synergies and compound effects
+ENHANCEMENT FOCUS:
+- Add specific metrics, timelines, and technologies
+- Adjust scores based on honest analysis (be critical)
+- Expand businessModel descriptions creatively
+- Identify hidden opportunities or fatal flaws
 
-REFINEMENT OBJECTIVES:
-- Make descriptions more compelling and specific (include numbers, timelines, specific technologies)
-- Adjust scores based on deeper analysis (be brutally honest)
-- Enhance reasoning with concrete examples and data points
-- Identify additional risks or opportunities not initially considered
-- Suggest pivots or variations that could 10x the potential
-
-You MUST output a valid JSON object with a single key "ideas" containing the refined array of business ideas.
-Maintain the exact same structure as the input, including the ID field, but with enhanced content and adjusted scores where appropriate.
-
-REFINEMENT PRINCIPLES:
-- If an idea is truly weak, score it appropriately (don't inflate scores)
-- If an idea has hidden potential, explain how to unlock it
-- Add specific metrics, market data, or technological breakthroughs that support the idea
-- Consider timing: what makes this idea particularly relevant NOW vs 5 years ago/from now?
-- Think about network effects, platform dynamics, and winner-take-all scenarios
-
-Remember: Great ideas often look crazy at first. Look for the non-obvious insights that others might miss.
+OUTPUT FORMAT: Pure JSON array with refined ideas maintaining original structure.
 `;
 // Agent instances will be created dynamically with generated IDs
 
@@ -144,10 +126,20 @@ async function* executeIdeationAgent(
   // Phase 1: Generate initial ideas
   yield { type: 'status', data: 'Generating initial business ideas...' };
   
-  const userPrompt = `Generate business ideas for the following preferences:
+  let userPrompt = `Generate business ideas for the following preferences:
     Vertical: ${preferences.vertical}
     Sub-Vertical: ${preferences.subVertical}
     Business Model: ${preferences.businessModel}`;
+  
+  // Add additional context if provided - this is highly important as the user explicitly provided it
+  if (preferences.additionalContext && preferences.additionalContext.trim() !== '') {
+    userPrompt += `
+    
+    CRITICAL ADDITIONAL CONTEXT (This is extremely important - the user has specifically provided this guidance):
+    ${preferences.additionalContext}
+    
+    You MUST incorporate this additional context into your idea generation. This context represents specific requirements, constraints, or focus areas that are crucial to the user. Give this context the highest priority when generating ideas.`;
+  }
 
   const initialStream = await run(ideationAgentInstance, userPrompt, { stream: true });
 
@@ -197,61 +189,80 @@ async function* executeIdeationAgent(
       }
     }
   }
-// Phase 2: Refine ideas (if enabled)
-if (configService.useRefinement && collectedIdeas.length > 0) {
-  yield { type: 'status', data: 'Refining and enhancing business ideas...' };
   
-  const refinementPromptText = `Here are the initial business ideas to refine and enhance:\n\n${JSON.stringify({ ideas: collectedIdeas }, null, 2)}\n\nApply critical analysis to improve these ideas, adjust scores based on deeper insights, and enhance all descriptions and reasoning.`;
-  
-  const refinementStream = await run(refinementAgentInstance, refinementPromptText, { stream: true });
-  
-  // Clear ideas to track refined versions
-  let refinedBuffer = '';
-  let refinedIdeasCount = 0;
-  
-  // Stream refined ideas
-  for await (const chunk of refinementStream.toTextStream()) {
-    // Don't emit chunks during refinement to avoid confusion
-    refinedBuffer += chunk;
-    const { newIdeas: refinedIdeas, newBuffer: newRefinedBuffer } = parseCompleteIdeasFromBuffer(refinedBuffer);
+  // Phase 2: Refine ideas (if enabled)
+  if (configService.useRefinement && collectedIdeas.length > 0) {
+    yield { type: 'status', data: 'Refining and enhancing business ideas...' };
     
-    if (refinedIdeas.length > 0) {
-      for (const refinedIdea of refinedIdeas) {
-        try {
-          const validatedRefinedIdea = businessIdeaSchema.parse(refinedIdea);
-          yield { type: 'refined-idea', data: validatedRefinedIdea };
-          refinedIdeasCount++;
-        } catch (error) {
-          console.error('Invalid refined business idea structure:', error);
-          if (error instanceof z.ZodError) {
-            console.error('Validation errors:', error.errors);
+    // Process ideas in batches to avoid truncation with GPT-4o
+    const BATCH_SIZE = 3;
+    const allRefinedIdeas: BusinessIdea[] = [];
+    
+    for (let i = 0; i < collectedIdeas.length; i += BATCH_SIZE) {
+      const batch = collectedIdeas.slice(i, Math.min(i + BATCH_SIZE, collectedIdeas.length));
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(collectedIdeas.length / BATCH_SIZE);
+      
+      console.log(`[REFINEMENT] Processing batch ${batchNumber} of ${totalBatches} (${batch.length} ideas)`);
+      yield { type: 'status', data: `Refining ideas batch ${batchNumber} of ${totalBatches}...` };
+      
+      const batchPromptText = `Here are ${batch.length} business ideas to refine and enhance:\n\n${JSON.stringify(batch, null, 2)}\n\nApply critical analysis to improve these ${batch.length} ideas. Output a JSON array with exactly ${batch.length} refined ideas.`;
+      
+      const refinementStream = await run(refinementAgentInstance, batchPromptText, { stream: true });
+      
+      let batchBuffer = '';
+      let batchRefinedCount = 0;
+      
+      // Stream refined ideas for this batch
+      for await (const chunk of refinementStream.toTextStream()) {
+        batchBuffer += chunk;
+        
+        const { newIdeas: refinedIdeas, newBuffer: newBatchBuffer } = parseCompleteIdeasFromBuffer(batchBuffer);
+        
+        if (refinedIdeas.length > 0) {
+          for (const refinedIdea of refinedIdeas) {
+            try {
+              const validatedRefinedIdea = businessIdeaSchema.parse(refinedIdea);
+              allRefinedIdeas.push(validatedRefinedIdea);
+              yield { type: 'refined-idea', data: validatedRefinedIdea };
+              batchRefinedCount++;
+            } catch (error) {
+              console.error(`[REFINEMENT BATCH ${batchNumber}] Validation error:`, error);
+              if (error instanceof z.ZodError) {
+                console.error('[REFINEMENT VALIDATION] Errors:', error.errors.map(e => ({
+                  path: e.path.join('.'),
+                  message: e.message
+                })));
+              }
+            }
           }
+          batchBuffer = newBatchBuffer;
         }
       }
-      refinedBuffer = newRefinedBuffer;
-    }
-  }
-  
-  await refinementStream.completed;
-  
-  // Process any remaining refined ideas
-  const { newIdeas: remainingRefinedIdeas } = parseCompleteIdeasFromBuffer(refinedBuffer);
-  
-  for (const refinedIdea of remainingRefinedIdeas) {
-    try {
-      const validatedRefinedIdea = businessIdeaSchema.parse(refinedIdea);
-      yield { type: 'refined-idea', data: validatedRefinedIdea };
-      refinedIdeasCount++;
-    } catch (error) {
-      console.error('Invalid refined business idea structure:', error);
-      if (error instanceof z.ZodError) {
-        console.error('Validation errors:', error.errors);
+      
+      await refinementStream.completed;
+      
+      // Process any remaining ideas in batch buffer
+      const { newIdeas: remainingBatchIdeas } = parseCompleteIdeasFromBuffer(batchBuffer);
+      
+      for (const refinedIdea of remainingBatchIdeas) {
+        try {
+          const validatedRefinedIdea = businessIdeaSchema.parse(refinedIdea);
+          allRefinedIdeas.push(validatedRefinedIdea);
+          yield { type: 'refined-idea', data: validatedRefinedIdea };
+          batchRefinedCount++;
+        } catch (error) {
+          console.error(`[REFINEMENT BATCH ${batchNumber}] Failed to validate remaining idea:`, error);
+        }
       }
+      
+      console.log(`[REFINEMENT] Batch ${batchNumber} completed: ${batchRefinedCount}/${batch.length} ideas refined`);
     }
-  }
-  
-    if (refinedIdeasCount !== collectedIdeas.length) {
-      console.warn(`Expected ${collectedIdeas.length} refined ideas, but got ${refinedIdeasCount}`);
+    
+    console.log(`[REFINEMENT] Total refined ideas: ${allRefinedIdeas.length} out of ${collectedIdeas.length} original ideas`);
+    
+    if (allRefinedIdeas.length !== collectedIdeas.length) {
+      console.error(`[REFINEMENT ERROR] Mismatch in idea count: ${allRefinedIdeas.length} refined vs ${collectedIdeas.length} original`);
     }
   }
   

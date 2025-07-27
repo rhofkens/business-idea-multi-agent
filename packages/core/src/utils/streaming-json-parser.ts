@@ -56,11 +56,20 @@ export function parseCompleteIdeasFromBuffer(
     if (objectEndIndex !== -1) {
       // A complete object seems to be found
       const objectStr = workBuffer.substring(objectStartIndex, objectEndIndex + 1);
+      
       try {
         const rawIdea = JSON.parse(objectStr);
+        
         const validation = businessIdeaSchema.safeParse(rawIdea);
         if (validation.success) {
           newIdeas.push(validation.data as BusinessIdea);
+        } else {
+          // Keep validation error logging as it's essential for debugging
+          console.error(`[PARSER] Failed to validate idea:`, rawIdea.title || 'unknown');
+          console.error('[PARSER] Validation errors:', validation.error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          })));
         }
         // Whether it's valid or not, we move past it.
         cursor = objectEndIndex + 1;
@@ -76,6 +85,7 @@ export function parseCompleteIdeasFromBuffer(
 
   // The new buffer is whatever was left after the last successfully parsed object
   const newBuffer = workBuffer.substring(cursor);
+  
   // We need to prepend the '[' we stripped out, in case the JSON is not yet complete.
   return { newIdeas, newBuffer: '[' + newBuffer };
 }

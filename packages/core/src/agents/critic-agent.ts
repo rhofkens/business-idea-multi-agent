@@ -46,6 +46,9 @@ Overall Score Calculation (ADR-005):
 
 3. Final score: clamp(baseScore + riskAdjustment, 0, 10)
 
+IMPORTANT: Return ONLY valid JSON without any markdown formatting, code fences, or explanatory text.
+Your response must start with { and end with }
+
 Return your analysis as a JSON object with these fields:
 {
   "id": "EXACT ID from the input - DO NOT CHANGE",
@@ -123,8 +126,24 @@ ${idea.reasoning.blueOcean ? `- Blue Ocean: ${idea.reasoning.blueOcean}` : ''}
     throw new Error('No response from critic agent');
   }
 
+  // Clean the content - remove markdown code fences if present
+  let cleanedContent = content.trim();
+  
+  // Remove markdown code fences
+  if (cleanedContent.startsWith('```json')) {
+    cleanedContent = cleanedContent.slice(7); // Remove ```json
+  } else if (cleanedContent.startsWith('```')) {
+    cleanedContent = cleanedContent.slice(3); // Remove ```
+  }
+  
+  if (cleanedContent.endsWith('```')) {
+    cleanedContent = cleanedContent.slice(0, -3); // Remove trailing ```
+  }
+  
+  cleanedContent = cleanedContent.trim();
+
   // Parse JSON response
-  const evaluationData = JSON.parse(content);
+  const evaluationData = JSON.parse(cleanedContent);
   
   // Calculate the overall score based on ADR-005
   const baseScore =

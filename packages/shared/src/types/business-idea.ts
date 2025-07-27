@@ -20,7 +20,7 @@ export interface BusinessIdea {
   id: string;
   title: string;
   description: string;
-  businessModel: 'B2B' | 'B2C' | 'B2B2C' | 'Marketplace' | 'SaaS' | 'DTC';
+  businessModel: string;
   disruptionPotential: number;
   marketPotential: number;
   technicalComplexity: number;
