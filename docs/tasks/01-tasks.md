@@ -55,9 +55,9 @@ This task list details the implementation steps for the User Authentication & Se
   - `findById(id: string): User | null`
   - `validateCredentials(username: string, password: string): Promise<User | null>`
 - [ ] Initialize with test users:
-  - admin: { username: 'admin', password: 'admin123', email: 'admin@test.com', role: 'admin' }
-  - user: { username: 'user', password: 'user123', email: 'user@test.com', role: 'user' }
-  - guest: { username: 'guest', password: 'guest123', email: 'guest@test.com', role: 'guest' }
+  - admin: { username: 'admin', password: 'Adm!nP@ss2024', email: 'admin@test.com', role: 'admin' }
+  - user: { username: 'user', password: 'Us3r$ecure#24', email: 'user@test.com', role: 'user' }
+  - guest: { username: 'guest', password: 'Gu3st!Pass@24', email: 'guest@test.com', role: 'guest' }
 - [ ] Hash all passwords using bcrypt with salt rounds of 10
 
 ### 3. Backend - Authentication API Endpoints

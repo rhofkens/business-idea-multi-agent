@@ -32,9 +32,9 @@ For development and testing, use these pre-configured users:
 
 | Email | Password | Role |
 |-------|----------|------|
-| `admin@test.com` | `admin123` | Administrator |
-| `user@test.com` | `user123` | Regular User |
-| `guest@test.com` | `guest123` | Guest User |
+| `admin@test.com` | `Adm!nP@ss2024` | Administrator |
+| `user@test.com` | `Us3r$ecure#24` | Regular User |
+| `guest@test.com` | `Gu3st!Pass@24` | Guest User |
 
 ### Features
 

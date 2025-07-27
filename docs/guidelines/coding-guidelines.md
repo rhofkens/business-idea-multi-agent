@@ -651,7 +651,7 @@ test('POST /login returns JWT token', async (t) => {
     url: '/login',
     payload: {
       email: 'test@example.com',
-      password: 'password123'
+      password: 'T3st!Pass@24'
     }
   })
   

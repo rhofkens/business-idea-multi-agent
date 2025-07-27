@@ -129,9 +129,9 @@ const LoginForm = () => {
               <div className="text-center text-sm text-muted-foreground">
                 <p>Test accounts:</p>
                 <ul className="mt-2 space-y-1">
-                  <li>admin@test.com - Password: admin123</li>
-                  <li>user@test.com - Password: user123</li>
-                  <li>guest@test.com - Password: guest123</li>
+                  <li>admin@test.com - Password: Adm!nP@ss2024</li>
+                  <li>user@test.com - Password: Us3r$ecure#24</li>
+                  <li>guest@test.com - Password: Gu3st!Pass@24</li>
                 </ul>
               </div>
             </CardFooter>

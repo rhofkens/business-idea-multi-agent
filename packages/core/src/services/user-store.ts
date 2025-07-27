@@ -15,9 +15,9 @@ import bcrypt from 'bcrypt';
  * - Credential validation
  *
  * Test Users:
- * - admin@test.com / admin123 (role: admin)
- * - user@test.com / user123 (role: user)
- * - guest@test.com / guest123 (role: guest)
+ * - admin@test.com / Adm!nP@ss2024 (role: admin)
+ * - user@test.com / Us3r$ecure#24 (role: user)
+ * - guest@test.com / Gu3st!Pass@24 (role: guest)
  *
  * @warning In production, this should be replaced with a proper database
  *          implementation using PostgreSQL, MongoDB, or similar.
@@ -61,9 +61,9 @@ export class UserStore {
    * password hashed using bcrypt with 10 salt rounds.
    *
    * Test Users:
-   * - admin@test.com (password: admin123) - Full admin privileges
-   * - user@test.com (password: user123) - Standard user privileges
-   * - guest@test.com (password: guest123) - Limited guest privileges
+   * - admin@test.com (password: Adm!nP@ss2024) - Full admin privileges
+   * - user@test.com (password: Us3r$ecure#24) - Standard user privileges
+   * - guest@test.com (password: Gu3st!Pass@24) - Limited guest privileges
    *
    * @private
    * @returns {Promise<void>}
@@ -72,7 +72,7 @@ export class UserStore {
     const saltRounds = 10;
 
     // Admin user
-    const adminPassword = await bcrypt.hash('admin123', saltRounds);
+    const adminPassword = await bcrypt.hash('Adm!nP@ss2024', saltRounds);
     this.users.set('admin@test.com', {
       id: String(this.idCounter++),
       email: 'admin@test.com',
@@ -84,7 +84,7 @@ export class UserStore {
     });
 
     // Regular user
-    const userPassword = await bcrypt.hash('user123', saltRounds);
+    const userPassword = await bcrypt.hash('Us3r$ecure#24', saltRounds);
     this.users.set('user@test.com', {
       id: String(this.idCounter++),
       email: 'user@test.com',
@@ -96,7 +96,7 @@ export class UserStore {
     });
 
     // Guest user
-    const guestPassword = await bcrypt.hash('guest123', saltRounds);
+    const guestPassword = await bcrypt.hash('Gu3st!Pass@24', saltRounds);
     this.users.set('guest@test.com', {
       id: String(this.idCounter++),
       email: 'guest@test.com',
@@ -149,7 +149,7 @@ export class UserStore {
    *
    * @example
    * ```typescript
-   * const credentials = { email: 'admin@test.com', password: 'admin123' };
+   * const credentials = { email: 'admin@test.com', password: 'Adm!nP@ss2024' };
    * const user = await userStore.validateCredentials(credentials);
    * if (user) {
    *   console.log('Login successful!');

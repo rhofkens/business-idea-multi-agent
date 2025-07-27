@@ -88,7 +88,7 @@
    - [ ] Logout is accessible from any page
 
 6. **Testing Requirements**
-   - [ ] Can login with test user credentials (admin/admin123, user/user123)
+   - [ ] Can login with test user credentials (admin/Adm!nP@ss2024, user/Us3r$ecure#24)
    - [ ] Cannot access protected routes without authentication
    - [ ] Session timeout works as expected
    - [ ] Multiple concurrent sessions are handled correctly

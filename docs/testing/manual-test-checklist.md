@@ -23,12 +23,12 @@ This checklist guides through manual testing of the business idea multi-agent sy
 #### B. Authentication Endpoints
 
 ##### Login Endpoint (/api/auth/login)
-- [ ] Test valid login with admin@test.com / password123
+- [ ] Test valid login with admin@test.com / Adm!nP@ss2024
   - [ ] Returns 200 status
   - [ ] Response includes user object with id, email, role
   - [ ] Session cookie is set (fastify-session)
-- [ ] Test valid login with user@test.com / password123
-- [ ] Test valid login with guest@test.com / password123
+- [ ] Test valid login with user@test.com / Us3r$ecure#24
+- [ ] Test valid login with guest@test.com / Gu3st!Pass@24
 - [ ] Test invalid email format
   - [ ] Returns 400 status with validation error
 - [ ] Test non-existent user
@@ -71,7 +71,7 @@ This checklist guides through manual testing of the business idea multi-agent sy
   - [ ] Invalid email shows "Invalid email address"
   - [ ] Empty password shows "Password is required"
 - [ ] Test successful login:
-  - [ ] Enter admin@test.com / password123
+  - [ ] Enter admin@test.com / Adm!nP@ss2024
   - [ ] Click login button
   - [ ] Verify redirect to home page
   - [ ] User info displays correctly

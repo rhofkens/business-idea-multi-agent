@@ -144,7 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * const { login } = useAuthContext();
    *
    * try {
-   *   await login({ email: 'user@example.com', password: 'password123' });
+   *   await login({ email: 'user@example.com', password: 'Us3r$ecure#24' });
    *   // Redirect to dashboard
    * } catch (error) {
    *   // Show error message

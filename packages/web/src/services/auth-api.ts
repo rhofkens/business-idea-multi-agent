@@ -47,7 +47,7 @@ export class AuthApi {
    * try {
    *   const response = await authApi.login({
    *     email: 'admin@test.com',
-   *     password: 'admin123'
+   *     password: 'Adm!nP@ss2024'
    *   });
    *   console.log('Logged in as:', response.user.username);
    * } catch (error) {

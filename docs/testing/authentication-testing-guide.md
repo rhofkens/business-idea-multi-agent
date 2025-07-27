@@ -18,10 +18,10 @@ The authentication system uses:
 ## Test Users
 
 | Email | Password | Role |
-|-------|----------|------| 
-| admin@test.com | password123 | admin |
-| user@test.com | password123 | user |
-| guest@test.com | password123 | guest |
+|-------|----------|------|
+| admin@test.com | Adm!nP@ss2024 | admin |
+| user@test.com | Us3r$ecure#24 | user |
+| guest@test.com | Gu3st!Pass@24 | guest |
 
 ## Automated Testing
 
@@ -85,7 +85,7 @@ npm run dev
 2. Should redirect to /login
 3. Enter credentials:
    - Email: admin@test.com
-   - Password: password123
+   - Password: Adm!nP@ss2024
 4. Click "Login"
    - This sends a POST request to http://localhost:3001/api/auth/login (backend)
 5. Verify:
@@ -114,7 +114,7 @@ Test each scenario and verify appropriate error messages:
 
 4. **Non-existent User**
    - Email: fake@test.com
-   - Password: password123
+   - Password: Adm!nP@ss2024
    - Error: "Invalid credentials"
 
 ### 3. Session Management Testing
@@ -152,7 +152,7 @@ All API requests go to the backend server on port 3001:
 # POST to backend API endpoint
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@test.com","password":"password123"}' \
+  -d '{"email":"admin@test.com","password":"Adm!nP@ss2024"}' \
   -c cookies.txt -v
 ```
 

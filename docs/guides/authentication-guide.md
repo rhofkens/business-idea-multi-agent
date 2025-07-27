@@ -91,7 +91,7 @@ const users = new Map<string, User & { passwordHash: string }>();
 
 // Initialize test users
 export async function initializeTestUsers() {
-  const password = await bcrypt.hash('password123', SALT_ROUNDS);
+  const password = await bcrypt.hash('Adm!nP@ss2024', SALT_ROUNDS);
   
   users.set('1', {
     id: '1',
@@ -435,7 +435,7 @@ test('POST /api/auth/login - success', async (t) => {
     url: '/api/auth/login',
     payload: {
       email: 'admin@test.com',
-      password: 'password123'
+      password: 'Adm!nP@ss2024'
     }
   });
   
@@ -449,7 +449,7 @@ test('GET /api/auth/user - authenticated', async (t) => {
   const loginResponse = await app.inject({
     method: 'POST',
     url: '/api/auth/login',
-    payload: { email: 'admin@test.com', password: 'password123' }
+    payload: { email: 'admin@test.com', password: 'Adm!nP@ss2024' }
   });
   
   const cookie = loginResponse.headers['set-cookie'];
@@ -475,7 +475,7 @@ test('login updates auth context', async () => {
   });
   
   await act(async () => {
-    await result.current.login('admin@test.com', 'password123');
+    await result.current.login('admin@test.com', 'Adm!nP@ss2024');
   });
   
   expect(result.current.user).toBeTruthy();

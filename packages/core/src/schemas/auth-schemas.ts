@@ -13,7 +13,7 @@ import { Type, Static } from '@sinclair/typebox';
  * ```json
  * {
  *   "email": "admin@test.com",
- *   "password": "admin123"
+ *   "password": "Adm!nP@ss2024"
  * }
  * ```
  */

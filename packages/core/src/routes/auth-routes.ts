@@ -50,7 +50,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
    * ```json
    * {
    *   "email": "admin@test.com",
-   *   "password": "admin123"
+   *   "password": "Adm!nP@ss2024"
    * }
    * ```
    */

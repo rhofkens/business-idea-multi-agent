@@ -73,7 +73,7 @@ const response = await fetch('http://localhost:3001/api/auth/login', {
   credentials: 'include', // Important for cookies
   body: JSON.stringify({
     email: 'admin@test.com',
-    password: 'password123'
+    password: 'Adm!nP@ss2024'
   })
 });
 
@@ -383,7 +383,7 @@ test('POST /api/auth/login', async (t) => {
     url: '/api/auth/login',
     payload: {
       email: 'admin@test.com',
-      password: 'password123'
+      password: 'Adm!nP@ss2024'
     }
   });
   
@@ -408,7 +408,7 @@ test('login updates user state', async () => {
   const { result } = renderHook(() => useAuth(), { wrapper });
   
   await act(async () => {
-    await result.current.login('admin@test.com', 'password123');
+    await result.current.login('admin@test.com', 'Adm!nP@ss2024');
   });
   
   expect(result.current.user).toEqual({

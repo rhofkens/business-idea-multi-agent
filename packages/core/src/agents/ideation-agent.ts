@@ -257,6 +257,10 @@ async function* executeIdeationAgent(
       }
       
       console.log(`[REFINEMENT] Batch ${batchNumber} completed: ${batchRefinedCount}/${batch.length} ideas refined`);
+      
+      if (batchRefinedCount !== batch.length) {
+        console.warn(`[REFINEMENT] Batch ${batchNumber}: Expected ${batch.length} ideas but got ${batchRefinedCount}`);
+      }
     }
     
     console.log(`[REFINEMENT] Total refined ideas: ${allRefinedIdeas.length} out of ${collectedIdeas.length} original ideas`);

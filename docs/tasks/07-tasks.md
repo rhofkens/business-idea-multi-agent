@@ -361,6 +361,7 @@ if (e.agentName === "DocumentationAgent" && e.type === "progress" && e.metadata?
 if (e.agentName === "DocumentationAgent" && e.type === "result" && e.metadata?.data) {
   return true;
 }
+```
 
 Stop the flow.
 ASK THE USER how to continue with the rest of the implementation
