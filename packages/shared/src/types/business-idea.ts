@@ -37,4 +37,5 @@ export interface BusinessIdea {
   };
   competitorAnalysis?: string;
   criticalAnalysis?: string;
+  starred?: boolean;
 }

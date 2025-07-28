@@ -430,7 +430,12 @@ export function SmartTable({
 
 
   const toggleStar = async (id: string) => {
+    console.log('[SmartTable] toggleStar called for id:', id);
+    console.log('[SmartTable] showCurrentRun:', showCurrentRun);
+    
     const isStarred = starredIdeas.has(id);
+    console.log('[SmartTable] Current starred status:', isStarred);
+    console.log('[SmartTable] databaseIdeas before update:', databaseIdeas.map(idea => ({ id: idea.id, starred: idea.starred })));
     
     // Optimistically update UI
     setStarredIdeas(prev => {
@@ -440,25 +445,44 @@ export function SmartTable({
       } else {
         newSet.add(id);
       }
+      console.log('[SmartTable] Updated starredIdeas Set:', Array.from(newSet));
       return newSet;
     });
     
-    // If viewing database ideas, persist the change
+    // If viewing database ideas, also update the databaseIdeas array for immediate UI feedback
     if (!showCurrentRun) {
-      try {
-        await ideasApi.updateStarred(id, !isStarred);
-      } catch (error) {
-        console.error('[SmartTable] Error updating starred status:', error);
-        // Revert on error
-        setStarredIdeas(prev => {
-          const newSet = new Set(prev);
-          if (isStarred) {
-            newSet.add(id);
-          } else {
-            newSet.delete(id);
-          }
-          return newSet;
-        });
+      console.log('[SmartTable] Updating databaseIdeas array...');
+      setDatabaseIdeas(prev => {
+        const updated = prev.map(idea =>
+          idea.id === id ? { ...idea, starred: !isStarred } : idea
+        );
+        console.log('[SmartTable] databaseIdeas after update:', updated.map(idea => ({ id: idea.id, starred: idea.starred })));
+        return updated;
+      });
+    }
+    
+    // Always persist to database
+    try {
+      await ideasApi.updateStarred(id, !isStarred);
+      console.log('[SmartTable] API call successful');
+    } catch (error) {
+      console.error('[SmartTable] Error updating starred status:', error);
+      // Revert starredIdeas Set on error
+      setStarredIdeas(prev => {
+        const newSet = new Set(prev);
+        if (isStarred) {
+          newSet.add(id);
+        } else {
+          newSet.delete(id);
+        }
+        return newSet;
+      });
+      
+      // If in database mode, also revert databaseIdeas array
+      if (!showCurrentRun) {
+        setDatabaseIdeas(prev => prev.map(idea =>
+          idea.id === id ? { ...idea, starred: isStarred } : idea
+        ));
       }
     }
   };
@@ -485,6 +509,8 @@ export function SmartTable({
   // Use live ideas when showCurrentRun is true, database ideas when false
   const displayIdeas = showCurrentRun ? ideas : databaseIdeas;
   
+  console.log('[SmartTable] displayIdeas:', displayIdeas.map(idea => ({ id: idea.id, starred: idea.starred })));
+
   const filteredIdeas = displayIdeas.filter(idea =>
     showCurrentRun ? idea.isCurrentRun : true
   );
@@ -614,6 +640,9 @@ export function SmartTable({
                 filteredIdeas.map((idea, index) => {
                   // Report is available if a path exists, or if we are viewing from the database
                   const isReportAvailable = idea.reportPath || !showCurrentRun;
+                  
+                  // Debug logging for star rendering
+                  console.log('[SmartTable] Rendering idea:', { id: idea.id, starred: idea.starred, showCurrentRun });
 
                   return (
                     <TableRow

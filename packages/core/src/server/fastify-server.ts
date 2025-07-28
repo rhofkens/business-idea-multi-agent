@@ -38,7 +38,7 @@ export async function createFastifyServer(): Promise<FastifyInstance> {
       }
     },
     credentials: true, // Allow cookies
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow OPTIONS
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Explicitly allow OPTIONS
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'], // Add common headers
     exposedHeaders: ['Set-Cookie'], // Allow frontend to see Set-Cookie header
     preflightContinue: false, // Let Fastify handle OPTIONS

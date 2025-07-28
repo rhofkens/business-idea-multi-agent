@@ -20,7 +20,12 @@ export function registerIdeasRoutes(fastify: FastifyInstance): void {
         return reply.code(401).send({ error: 'Unauthorized' });
       }
 
-      const starred = request.query.starred === 'true';
+      const getStarred = (query?: string): boolean | undefined => {
+        if (query === 'true') return true;
+        if (query === 'false') return false;
+        return undefined;
+      };
+      const starred = getStarred(request.query.starred);
       
       loggingService.log({
         level: 'INFO',

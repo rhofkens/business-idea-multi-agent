@@ -130,6 +130,9 @@ export class IdeaRepositoryImpl implements IdeaRepository {
   }
 
   private rowToBusinessIdea(row: Idea): BusinessIdea {
+    // Debug logging to check starred value
+    console.log(`[IdeaRepository] rowToBusinessIdea - id: ${row.id}, starred raw value: ${row.starred}, type: ${typeof row.starred}`);
+    
     return {
       id: row.id,
       title: row.title,
@@ -144,6 +147,7 @@ export class IdeaRepositoryImpl implements IdeaRepository {
       reasoning: JSON.parse(row.reasoning),
       competitorAnalysis: row.competitorAnalysis || undefined,
       criticalAnalysis: row.criticalAnalysis || undefined,
+      starred: Boolean(row.starred), // Explicitly convert to boolean
     };
   }
 }

@@ -124,15 +124,13 @@ export const ideasApi = {
    * Updates the starred status of an idea
    * @param id - The idea ID
    * @param starred - The new starred status
-   * @returns Promise with the updated idea
+   * @returns Promise with void (backend doesn't return updated idea)
    */
-  async updateStarred(id: string, starred: boolean): Promise<BusinessIdea> {
-    const response = await apiClient.patch<IdeaDetailResponse>(`/api/ideas/${id}/star`, { starred });
+  async updateStarred(id: string, starred: boolean): Promise<void> {
+    const response = await apiClient.patch<{ success: boolean }>(`/api/ideas/${id}/star`, { starred });
     
-    if (!response.success || !response.data) {
+    if (!response.success) {
       throw new Error(response.error || 'Failed to update starred status');
     }
-    
-    return transformIdeaResponse(response.data.idea);
   },
 };
