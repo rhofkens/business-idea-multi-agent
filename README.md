@@ -405,8 +405,5 @@ The application now includes a persistence layer using **SQLite and Drizzle ORM*
 
 ## Future Enhancements
 
-- API package for RESTful endpoints
-- Real-time WebSocket support for streaming updates
-- User authentication and multi-tenancy
 - Enhanced web UI with visualization components
 - Mobile application support
