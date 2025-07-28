@@ -2,6 +2,7 @@ import { runCriticAgent } from '../../agents/critic-agent.js';
 import { loggingService } from '../../services/logging-service.js';
 import { TestCacheService } from '../../services/test-cache-service.js';
 import { BusinessIdea } from '@business-idea/shared';
+import { ideaRepository } from '../../data/repositories/idea-repository.js';
 import type {
   StepParams,
   CriticStepInput,
@@ -71,12 +72,32 @@ export async function runCriticStep({
             emitEvent('status', 'CriticAgent', event.data);
             break;
 
-          case 'critical-analysis':
+          case 'critical-analysis': {
             criticalCount++;
             console.log(`\n🎯 Evaluating idea ${criticalCount}/${enrichedIdeas.length}: ${event.data.ideaTitle}`);
             console.log(`   📊 Overall Score: ${event.data.overallScore}/10`);
             console.log(`   🔍 Critical Analysis: ${event.data.analysis.substring(0, 150)}...`);
             console.log(`   ⏳ Progress: ${Math.round((criticalCount / enrichedIdeas.length) * 100)}% complete`);
+            
+            // Update idea stage in database with critical analysis data
+            if (context.runId && context.userId) {
+              try {
+                await ideaRepository.updateIdeaStage(event.data.ideaId, 'critic', {
+                  overallScore: event.data.overallScore,
+                  criticalAnalysis: event.data.analysis,
+                });
+                console.log(`   💾 Critical analysis persisted to database`);
+              } catch (error) {
+                console.error(`   ❌ Failed to persist critical analysis:`, error);
+                loggingService.log({
+                  level: 'ERROR',
+                  message: 'Failed to persist critical analysis to database',
+                  details: JSON.stringify({ ideaId: event.data.ideaId, error: String(error) }),
+                });
+              }
+            }
+            // Find the enriched idea to get the reasoning data
+            const currentIdea = enrichedIdeas.find(idea => idea.id === event.data.ideaId);
             
             emitEvent(
               'progress',
@@ -90,11 +111,18 @@ export async function runCriticStep({
                   ideaId: event.data.ideaId,
                   criticalCount,
                   totalIdeas: enrichedIdeas.length,
-                  analysis: event.data
+                  evaluation: {
+                    ideaId: event.data.ideaId,
+                    ideaTitle: event.data.ideaTitle,
+                    overallScore: event.data.overallScore,
+                    criticalAnalysis: event.data.analysis,
+                    reasoning: currentIdea?.reasoning
+                  }
                 }
               }
             );
             break;
+          }
 
           case 'complete':
             console.log('\n✅ Critical evaluation complete!');

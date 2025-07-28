@@ -1,6 +1,8 @@
 import { runDocumentationAgent } from '../../agents/documentation-agent.js';
 import { loggingService } from '../../services/logging-service.js';
 import { TestCacheService } from '../../services/test-cache-service.js';
+import { runRepository } from '../../data/repositories/run-repository.js';
+import { ideaRepository } from '../../data/repositories/idea-repository.js';
 import type { DocumentationAgentOutput } from '../../types/agent-types.js';
 import type {
   StepParams,
@@ -65,8 +67,12 @@ export async function runDocumentationStep({
             // Don't display raw chunks from documentation agent
             break;
             
-          case 'idea-processed':
+          case 'idea-processed': {
             console.log(`✅ Documented idea ${event.data.index}/${event.data.total}: ${event.data.title}`);
+            
+            // Find the corresponding idea to get its ID
+            const ideaIndex = event.data.index - 1; // Convert 1-based to 0-based index
+            const currentIdea = criticallyEvaluatedIdeas[ideaIndex];
             
             emitEvent(
               'progress',
@@ -77,6 +83,7 @@ export async function runDocumentationStep({
                 progress: Math.round((event.data.index / event.data.total) * 100),
                 stage: 'documentation',
                 data: {
+                  ideaId: currentIdea?.id,
                   index: event.data.index,
                   total: event.data.total,
                   title: event.data.title
@@ -84,6 +91,7 @@ export async function runDocumentationStep({
               }
             );
             break;
+          }
             
           case 'section-generated':
             console.log(`📝 Generated section: ${event.data.section}`);
@@ -122,6 +130,29 @@ export async function runDocumentationStep({
       console.log(`📄 Report saved to: ${result.reportPath}`);
       console.log(`📊 Total ideas documented: ${result.ideasProcessed}`);
       console.log(`⏱️  Processing time: ${result.processingTime}ms`);
+      
+      // Persist document path to database
+      if (context.runId && context.userId && result.reportPath) {
+        try {
+          // Update run with document path
+          await runRepository.updateRunDocumentPath(context.runId, result.reportPath);
+          console.log(`   💾 Document path saved to run record`);
+          
+          // Update all ideas with document path and stage
+          for (const idea of criticallyEvaluatedIdeas) {
+            await ideaRepository.updateIdeaStage(idea.id, 'documented', {});
+            await ideaRepository.updateIdeaDocumentPath(idea.id, result.reportPath);
+          }
+          console.log(`   💾 Updated ${criticallyEvaluatedIdeas.length} ideas with document path and stage`);
+        } catch (error) {
+          console.error(`   ❌ Failed to persist document path:`, error);
+          loggingService.log({
+            level: 'ERROR',
+            message: 'Failed to persist document path to database',
+            details: JSON.stringify({ runId: context.runId, error: String(error) }),
+          });
+        }
+      }
       
       emitEvent(
         'result',

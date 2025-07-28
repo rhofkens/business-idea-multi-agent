@@ -2,6 +2,7 @@ import { runCompetitorAgent } from '../../agents/competitor-agent.js';
 import { loggingService } from '../../services/logging-service.js';
 import { TestCacheService } from '../../services/test-cache-service.js';
 import { BusinessIdea } from '@business-idea/shared';
+import { ideaRepository } from '../../data/repositories/idea-repository.js';
 import type {
   StepParams,
   CompetitorStepInput,
@@ -77,6 +78,24 @@ export async function runCompetitorStep({
             console.log(`   📊 Blue Ocean Score: ${event.data.blueOceanScore}/10`);
             console.log(`   🔍 Market Analysis: ${event.data.analysis.substring(0, 150)}...`);
             console.log(`   ⏳ Progress: ${Math.round((competitorCount / refinedIdeas.length) * 100)}% complete`);
+            
+            // Update idea stage in database with competitor analysis data
+            if (context.runId && context.userId) {
+              try {
+                await ideaRepository.updateIdeaStage(event.data.ideaId, 'competitor', {
+                  blueOceanScore: event.data.blueOceanScore,
+                  competitorAnalysis: event.data.analysis,
+                });
+                console.log(`   💾 Competitor analysis persisted to database`);
+              } catch (error) {
+                console.error(`   ❌ Failed to persist competitor analysis:`, error);
+                loggingService.log({
+                  level: 'ERROR',
+                  message: 'Failed to persist competitor analysis to database',
+                  details: JSON.stringify({ ideaId: event.data.ideaId, error: String(error) }),
+                });
+              }
+            }
             
             emitEvent(
               'progress',

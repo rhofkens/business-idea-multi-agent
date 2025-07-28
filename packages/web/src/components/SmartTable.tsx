@@ -38,7 +38,8 @@ import {
   Cpu,
   DollarSign,
   Waves,
-  Building
+  Building,
+  Database
 } from "lucide-react";
 import { SmartTableSkeleton } from "./SmartTableSkeleton";
 import { useWebSocketContext } from "@/contexts/WebSocketContext";
@@ -49,6 +50,7 @@ import { z } from "zod";
 import "@/styles/smart-table.css";
 import { useDocumentationViewer } from '@/hooks/useDocumentationViewer';
 import { MarkdownViewerModal } from './MarkdownViewerModal';
+import { ideasApi } from "@/services/ideas-api";
 
 interface SmartTableProps {
   className?: string;
@@ -104,6 +106,8 @@ export function SmartTable({
   const [newIdeaIds, setNewIdeaIds] = useState<Set<string>>(new Set());
   const [consolidatedReportEnabled, setConsolidatedReportEnabled] = useState(false);
   const [consolidatedReportPath, setConsolidatedReportPath] = useState<string | null>(null);
+  const [databaseIdeas, setDatabaseIdeas] = useState<BusinessIdea[]>([]);
+  const [isDatabaseLoading, setIsDatabaseLoading] = useState(false);
   const prevIdeasRef = useRef<BusinessIdea[]>([]);
 
   const { events, subscribe, unsubscribe, clearEvents } = useWebSocketContext();
@@ -128,6 +132,26 @@ export function SmartTable({
       unsubscribe("DocumentationAgent");
     };
   }, [isActive, subscribe, unsubscribe, clearEvents]);
+  
+  // Load ideas from database when toggled to database mode
+  useEffect(() => {
+    if (!showCurrentRun && databaseIdeas.length === 0) {
+      setIsDatabaseLoading(true);
+      ideasApi.getIdeas()
+        .then(response => {
+          setDatabaseIdeas(response.ideas);
+          // Update starred ideas based on database data
+          const starredSet = new Set(response.ideas.filter(idea => idea.starred).map(idea => idea.id));
+          setStarredIdeas(starredSet);
+        })
+        .catch(error => {
+          console.error('[SmartTable] Error loading ideas from database:', error);
+        })
+        .finally(() => {
+          setIsDatabaseLoading(false);
+        });
+    }
+  }, [showCurrentRun, ideasApi, databaseIdeas.length]);
   
   // Memoize the transformation of events to ideas
   const ideas = useMemo(() => {
@@ -405,7 +429,10 @@ export function SmartTable({
   }, [events, isActive]);
 
 
-  const toggleStar = (id: string) => {
+  const toggleStar = async (id: string) => {
+    const isStarred = starredIdeas.has(id);
+    
+    // Optimistically update UI
     setStarredIdeas(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -415,6 +442,25 @@ export function SmartTable({
       }
       return newSet;
     });
+    
+    // If viewing database ideas, persist the change
+    if (!showCurrentRun) {
+      try {
+        await ideasApi.updateStarred(id, !isStarred);
+      } catch (error) {
+        console.error('[SmartTable] Error updating starred status:', error);
+        // Revert on error
+        setStarredIdeas(prev => {
+          const newSet = new Set(prev);
+          if (isStarred) {
+            newSet.add(id);
+          } else {
+            newSet.delete(id);
+          }
+          return newSet;
+        });
+      }
+    }
   };
 
   // Track newly added ideas for animation
@@ -436,7 +482,10 @@ export function SmartTable({
     prevIdeasRef.current = ideas;
   }, [ideas]);
 
-  const filteredIdeas = ideas.filter(idea =>
+  // Use live ideas when showCurrentRun is true, database ideas when false
+  const displayIdeas = showCurrentRun ? ideas : databaseIdeas;
+  
+  const filteredIdeas = displayIdeas.filter(idea =>
     showCurrentRun ? idea.isCurrentRun : true
   );
 
@@ -456,21 +505,24 @@ export function SmartTable({
     openDocumentation(reportId);
   };
 
-  if (loading) {
+  // Combine loading states
+  const isLoading = loading || isDatabaseLoading;
+
+  if (isLoading && filteredIdeas.length === 0) {
     return (
       <Card className={cn("shadow-elegant", className)}>
-        <SmartTableSkeleton rows={5} showStreamingRow={true} />
+        <SmartTableSkeleton rows={5} showStreamingRow={isStreaming} />
       </Card>
     );
   }
 
   const renderScoreCell = (
-    score: number | null,
+    score: number | null | undefined,
     reasoning: string,
     type: keyof typeof ScoreIcon
   ) => {
     const Icon = ScoreIcon[type];
-    const isPending = score === null;
+    const isPending = score === null || score === undefined;
     
     return (
       <TooltipProvider>
@@ -485,7 +537,7 @@ export function SmartTable({
                 "font-medium text-sm",
                 isPending ? "text-muted-foreground" : getScoreColor(score)
               )}>
-                {score !== null ? score.toFixed(1) : "—"}
+                {score !== null && score !== undefined ? score.toFixed(1) : "—"}
               </span>
               <Info className={cn(
                 "h-3 w-3",
@@ -523,8 +575,8 @@ export function SmartTable({
             </Button>
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="filter-toggle" className="text-sm">Current run only</Label>
+            <Database className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="filter-toggle" className="text-sm">Live agent data</Label>
             <Switch id="filter-toggle" checked={showCurrentRun} onCheckedChange={setShowCurrentRun} />
           </div>
         </div>
@@ -552,57 +604,65 @@ export function SmartTable({
               {filteredIdeas.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
-                    {isActive ? "Generating ideas..." : "No ideas generated yet. Start by filling out the form above."}
+                    {isDatabaseLoading ? "Loading ideas from database..." :
+                     isActive ? "Generating ideas..." :
+                     showCurrentRun ? "No ideas generated yet. Start by filling out the form above." :
+                     "No ideas found in the database."}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredIdeas.map((idea, index) => (
-                  <TableRow
-                    key={idea.id}
-                    className={cn(
-                      "hover:bg-muted/50 transition-colors",
-                      newIdeaIds.has(idea.id) && "new-idea-glow"
-                    )}
-                  >
-                    <TableCell>
-                       <Button variant="ghost" size="sm" onClick={() => toggleStar(idea.id)} className="h-8 w-8 p-0 group">
-                         <Star className={cn("h-4 w-4 transition-colors", idea.starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground group-hover:text-yellow-400")} />
-                       </Button>
-                    </TableCell>
-                    <TableCell className="font-medium text-sm">{String(index + 1).padStart(2, '0')}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-semibold text-sm">{idea.title}</div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild><div className="text-xs text-muted-foreground cursor-help">{truncateText(idea.description, 100)}</div></TooltipTrigger>
-                            <TooltipContent className="max-w-md"><p>{idea.description}</p></TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </TableCell>
-                    <TableCell>{renderScoreCell(idea.scores.overall, idea.reasoning.overall, 'overall')}</TableCell>
-                    <TableCell>{renderScoreCell(idea.scores.disruption, idea.reasoning.disruption, 'disruption')}</TableCell>
-                    <TableCell>{renderScoreCell(idea.scores.market, idea.reasoning.market, 'market')}</TableCell>
-                    <TableCell>{renderScoreCell(idea.scores.technical, idea.reasoning.technical, 'technical')}</TableCell>
-                    <TableCell>{renderScoreCell(idea.scores.capital, idea.reasoning.capital, 'capital')}</TableCell>
-                    <TableCell>{renderScoreCell(idea.scores.blueOcean, idea.reasoning.blueOcean, 'blueOcean')}</TableCell>
-                    <TableCell><TooltipProvider><Tooltip><TooltipTrigger asChild><div className="text-xs cursor-help">{truncateText(idea.competitorAnalysis || "Analysis pending...")}</div></TooltipTrigger><TooltipContent className="max-w-md"><p>{idea.competitorAnalysis || "Competitor analysis is being generated..."}</p></TooltipContent></Tooltip></TooltipProvider></TableCell>
-                    <TableCell><TooltipProvider><Tooltip><TooltipTrigger asChild><div className="text-xs cursor-help">{truncateText(idea.criticalAnalysis || "Analysis pending...")}</div></TooltipTrigger><TooltipContent className="max-w-md"><p>{idea.criticalAnalysis || "Critical analysis is being generated..."}</p></TooltipContent></Tooltip></TooltipProvider></TableCell>
-                    <TableCell>
-                      <Button
-                        variant={idea.reportPath ? "outline" : "ghost"}
-                        size="sm"
-                        onClick={() => openDocumentation(idea.id)}
-                        disabled={!idea.reportPath || docLoading}
-                        className="h-8"
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        {idea.reportPath ? "View" : "Pending"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredIdeas.map((idea, index) => {
+                  // Report is available if a path exists, or if we are viewing from the database
+                  const isReportAvailable = idea.reportPath || !showCurrentRun;
+
+                  return (
+                    <TableRow
+                      key={idea.id}
+                      className={cn(
+                        "hover:bg-muted/50 transition-colors",
+                        newIdeaIds.has(idea.id) && "new-idea-glow"
+                      )}
+                    >
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => toggleStar(idea.id)} className="h-8 w-8 p-0 group">
+                          <Star className={cn("h-4 w-4 transition-colors", idea.starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground group-hover:text-yellow-400")} />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">{String(index + 1).padStart(2, '0')}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm">{idea.title}</div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild><div className="text-xs text-muted-foreground cursor-help">{truncateText(idea.description, 100)}</div></TooltipTrigger>
+                              <TooltipContent className="max-w-md"><p>{idea.description}</p></TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </TableCell>
+                      <TableCell>{renderScoreCell(idea.scores.overall, idea.reasoning.overall, 'overall')}</TableCell>
+                      <TableCell>{renderScoreCell(idea.scores.disruption, idea.reasoning.disruption, 'disruption')}</TableCell>
+                      <TableCell>{renderScoreCell(idea.scores.market, idea.reasoning.market, 'market')}</TableCell>
+                      <TableCell>{renderScoreCell(idea.scores.technical, idea.reasoning.technical, 'technical')}</TableCell>
+                      <TableCell>{renderScoreCell(idea.scores.capital, idea.reasoning.capital, 'capital')}</TableCell>
+                      <TableCell>{renderScoreCell(idea.scores.blueOcean, idea.reasoning.blueOcean, 'blueOcean')}</TableCell>
+                      <TableCell><TooltipProvider><Tooltip><TooltipTrigger asChild><div className="text-xs cursor-help">{truncateText(idea.competitorAnalysis || "Analysis pending...")}</div></TooltipTrigger><TooltipContent className="max-w-md"><p>{idea.competitorAnalysis || "Competitor analysis is being generated..."}</p></TooltipContent></Tooltip></TooltipProvider></TableCell>
+                      <TableCell><TooltipProvider><Tooltip><TooltipTrigger asChild><div className="text-xs cursor-help">{truncateText(idea.criticalAnalysis || "Analysis pending...")}</div></TooltipTrigger><TooltipContent className="max-w-md"><p>{idea.criticalAnalysis || "Critical analysis is being generated..."}</p></TooltipContent></Tooltip></TooltipProvider></TableCell>
+                      <TableCell>
+                        <Button
+                          variant={isReportAvailable ? "outline" : "ghost"}
+                          size="sm"
+                          onClick={() => openDocumentation(idea.id)}
+                          disabled={!isReportAvailable || docLoading}
+                          className="h-8"
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          {isReportAvailable ? "View" : "Pending"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
               {isStreaming && ideas.length > 0 && (
                 <TableRow className="bg-blue-50/50 animate-pulse">

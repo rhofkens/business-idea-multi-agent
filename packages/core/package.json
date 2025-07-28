@@ -14,7 +14,12 @@
     "dev:server": "nodemon --exec tsx src/server.ts",
     "lint": "eslint . --ext .ts",
     "type-check": "tsc --noEmit",
-    "test": "echo \"No tests configured yet\""
+    "test": "echo \"No tests configured yet\"",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:init": "tsx src/data/init-db.ts"
   },
   "dependencies": {
     "@business-idea/shared": "^1.0.0",
@@ -26,14 +31,19 @@
     "@sinclair/typebox": "^0.34.38",
     "@types/bcrypt": "^6.0.0",
     "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.2.0",
     "dotenv": "^17.1.0",
+    "drizzle-orm": "^0.44.3",
     "fastify": "^5.4.0",
+    "ulid": "^3.0.1",
     "ulidx": "^2.4.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.0.10",
     "@types/ws": "^8.18.1",
+    "drizzle-kit": "^0.31.4",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",

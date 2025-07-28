@@ -3,6 +3,7 @@ import { BusinessPreferences } from '@business-idea/shared';
 import type { WorkflowEvent } from '@business-idea/shared';
 import { WebSocketSessionManager } from '../services/websocket-session-manager.js';
 import { WebSocketCacheEmitter } from '../services/websocket-cache-emitter.js';
+import { runRepository } from '../data/repositories/run-repository.js';
 
 // Import step functions
 import { runIdeationStep } from './steps/ideation-step.js';
@@ -57,15 +58,28 @@ export class AgentOrchestrator {
    * Runs the full agent chain, from ideation to documentation.
    * @param preferences The business preferences provided by the user
    * @param useTestCache Whether to use test cache for development
+   * @param sessionId Optional session ID for WebSocket communication
+   * @param userId User ID for database persistence
    * @returns A promise that resolves to a success message.
    */
-  public async runChain(preferences: BusinessPreferences, useTestCache = false, sessionId?: string): Promise<string> {
+  public async runChain(preferences: BusinessPreferences, useTestCache = false, sessionId?: string, userId?: string): Promise<string> {
     this.sessionId = sessionId;
 
     try {
+      // Create a run in the database if userId is provided
+      let runId: string | undefined;
+      if (userId) {
+        const run = await runRepository.createRun(userId, preferences);
+        runId = run.id;
+        
+        this.emitEvent('status', 'Orchestrator', `Created run ${runId} for user ${userId}`);
+      }
+
       // Create the step context to be shared across all steps
       const context: StepContext = {
         sessionId: this.sessionId,
+        runId,
+        userId,
         wsManager: this.wsManager,
         cacheEmitter: this.cacheEmitter,
         emitEvent: this.emitEvent.bind(this),

@@ -2,6 +2,7 @@ import { ideationAgent } from '../../agents/ideation-agent.js';
 import { loggingService } from '../../services/logging-service.js';
 import { TestCacheService } from '../../services/test-cache-service.js';
 import { BusinessIdea } from '@business-idea/shared';
+import { ideaRepository } from '../../data/repositories/idea-repository.js';
 import type {
   StepParams,
   IdeationStepInput,
@@ -86,6 +87,21 @@ export async function runIdeationStep({
           case 'refined-idea':
             refinedIdeaCount++;
             collectedIdeas.push(event.data);
+
+            // Persist idea to database if runId and userId are available
+            if (context.runId && context.userId) {
+              try {
+                await ideaRepository.createIdea(context.runId, context.userId, event.data);
+                console.log(`   💾 Idea persisted to database`);
+              } catch (error) {
+                console.error(`   ❌ Failed to persist idea to database:`, error);
+                loggingService.log({
+                  level: 'ERROR',
+                  message: 'Failed to persist idea to database',
+                  details: JSON.stringify({ ideaId: event.data.id, error: String(error) }),
+                });
+              }
+            }
 
             console.log('\n\n--- Refined Idea ---');
             console.log(`🌟 Refined Idea ${refinedIdeaCount}: ${event.data.title}`);

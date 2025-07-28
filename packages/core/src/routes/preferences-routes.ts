@@ -122,13 +122,18 @@ export async function registerPreferencesRoutes(app: FastifyInstance): Promise<v
 
           // Import the test cache flag check function
           const { isTestCacheEnabled } = await import('../server.js');
+          
+          // Get the user from the session
+          const user = SessionUtils.getSessionUser(request);
+          const userId = user?.id;
+          
           const orchestrator = new AgentOrchestrator();
-          await orchestrator.runChain(businessPreferences, isTestCacheEnabled(), request.session.sessionId);
+          await orchestrator.runChain(businessPreferences, isTestCacheEnabled(), request.session.sessionId, userId);
 
           loggingService.log({
             level: 'INFO',
             message: 'Agent workflow completed successfully',
-            details: `Process ID: ${processId}`
+            details: `Process ID: ${processId}, User ID: ${userId || 'anonymous'}`
           });
         } catch (error) {
           loggingService.log({

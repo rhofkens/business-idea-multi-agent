@@ -8,6 +8,8 @@ import type { DocumentationAgentOutput } from '../../types/agent-types.js';
  */
 export interface StepContext {
   sessionId?: string;
+  runId?: string;
+  userId?: string;
   wsManager: WebSocketSessionManager;
   cacheEmitter: WebSocketCacheEmitter;
   emitEvent: (

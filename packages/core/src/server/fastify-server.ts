@@ -4,6 +4,7 @@ import fastifySession from '@fastify/session';
 import fastifyCors from '@fastify/cors';
 import { authRoutes } from '../routes/auth-routes.js';
 import { registerPreferencesRoutes } from '../routes/preferences-routes.js';
+import { registerIdeasRoutes } from '../routes/ideas-routes.js';
 import websocketPlugin from '../plugins/websocket-plugin.js';
 import { websocketRoute } from '../routes/websocket-route.js';
 import documentationRoutes from '../routes/documentation-routes.js';
@@ -74,6 +75,9 @@ export async function createFastifyServer(): Promise<FastifyInstance> {
   
   // Register preferences routes
   await fastify.register(registerPreferencesRoutes, { prefix: '/api' });
+  
+  // Register ideas routes
+  await fastify.register(registerIdeasRoutes);
   
   // Register documentation routes
   await fastify.register(documentationRoutes);

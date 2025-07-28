@@ -16,6 +16,7 @@ This implementation plan focuses on connecting the existing React frontend (crea
 | Smart Table - Critic Agent | Connect business critic agent to smart table for score updates | - Critical analysis appears in table<br>- All score columns update correctly<br>- Overall score calculates after all agents complete | - Document critic event structure<br>- Update scoring methodology docs<br>- Create score calculation guide |
 | Smart Table - Documentation Agent | Connect documentation agent for full report generation and viewing | - Full report button activates when ready<br>- Reports open in modal or new view<br>- Markdown renders correctly in UI | - Document report generation events<br>- Update report format specification<br>- Create report viewing guide |
 | Agent Workflow Statistics | Connect workflow stats component to event stream for real-time progress | - Progress bars update as agents work<br>- Statistics show accurate agent states<br>- Performance metrics display correctly | - Document statistics event structure<br>- Create monitoring guide<br>- Update architecture with metrics flow |
+| SQLite Persistence Layer | Implement SQLite database with Drizzle ORM for idea persistence and historical data | - All generated ideas persist to database<br>- Users can view historical runs and ideas<br>- Starring/favoriting ideas works correctly<br>- Toggle between current run and all data | - Document database schema and migrations<br>- Create persistence API documentation<br>- Update architecture with data layer |
 
 ## Next Steps
 
