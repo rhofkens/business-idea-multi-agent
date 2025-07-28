@@ -379,11 +379,34 @@ This is a proof of concept project. For contributions:
 4. Update documentation as needed
 5. Run linting and type checking before submitting changes
 
+## 🗄️ Database Persistence
+
+The application now includes a persistence layer using **SQLite and Drizzle ORM**, allowing all generated ideas and agent runs to be saved and retrieved.
+
+### Key Features
+
+- **SQLite Database**: A local `business-ideas.db` file stores all data.
+- **Drizzle ORM**: Provides a type-safe query builder for database interactions.
+- **Data Repositories**: `RunRepository` and `IdeaRepository` in `packages/core` handle all database operations.
+- **API Endpoints**: New routes in `packages/core/src/routes/ideas-routes.ts` expose database content.
+- **Frontend Integration**: The `SmartTable` component can now display historical data from the database.
+
+### How to Use
+
+1.  **Database Generation**: The database file is created automatically.
+2.  **Migrations**: To generate and apply database migrations, use the following commands in the `packages/core` directory:
+    ```bash
+    # Generate migration files based on schema changes
+    npm run db:generate
+
+    # Apply migrations to the database
+    npm run db:migrate
+    ```
+
 ## Future Enhancements
 
 - API package for RESTful endpoints
 - Real-time WebSocket support for streaming updates
-- Database integration for idea persistence
 - User authentication and multi-tenancy
 - Enhanced web UI with visualization components
 - Mobile application support
