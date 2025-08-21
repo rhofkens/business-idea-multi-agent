@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <!-- Main gradient for the bulb -->
+    <linearGradient id="bulbGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF6B35;stop-opacity:1" />
+    </linearGradient>
+    <!-- Gradient for the base -->
+    <linearGradient id="baseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#606060;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#303030;stop-opacity:1" />
+    </linearGradient>
+    <!-- Glow effect -->
+    <radialGradient id="glowGradient">
+      <stop offset="0%" style="stop-color:#FFEE00;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Outer glow -->
+  <circle cx="16" cy="13" r="11" fill="url(#glowGradient)" opacity="0.3"/>
+  
+  <!-- Main lightbulb -->
+  <circle cx="16" cy="13" r="10" fill="url(#bulbGradient)" stroke="#FF8C00" stroke-width="1.5"/>
+  
+  <!-- Inner highlight for 3D effect -->
+  <ellipse cx="14" cy="10" rx="4" ry="5" fill="#FFEE00" opacity="0.4"/>
+  
+  <!-- Lightbulb base -->
+  <rect x="11" y="21" width="10" height="5" fill="url(#baseGradient)" rx="1"/>
+  <rect x="12.5" y="26" width="7" height="3" fill="url(#baseGradient)" rx="1"/>
+  
+  <!-- Thread lines on base -->
+  <line x1="11.5" y1="22.5" x2="20.5" y2="22.5" stroke="#808080" stroke-width="0.5"/>
+  <line x1="11.5" y1="24" x2="20.5" y2="24" stroke="#808080" stroke-width="0.5"/>
+  <line x1="13" y1="27.5" x2="19" y2="27.5" stroke="#808080" stroke-width="0.5"/>
+  
+  <!-- Central filament with gradient -->
+  <g opacity="0.8">
+    <path d="M16 8 L14 11 L18 13 L14 15 L18 17 L16 20" stroke="#FF4500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  
+  <!-- Spark effects around the bulb -->
+  <g>
+    <path d="M5 10 L3 10 M5 10 L5 8" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M27 10 L29 10 M27 10 L27 8" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M6 18 L4 19 M6 18 L5 16" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M26 18 L28 19 M26 18 L27 16" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+</svg>
