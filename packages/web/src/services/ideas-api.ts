@@ -135,4 +135,17 @@ export const ideasApi = {
       throw new Error(response.error || 'Failed to update starred status');
     }
   },
+
+  /**
+   * Deletes multiple ideas by their IDs
+   * @param ids - Array of idea IDs to delete
+   * @returns Promise with void
+   */
+  async deleteIdeas(ids: string[]): Promise<void> {
+    const response = await apiClient.delete<{ success: boolean }>('/api/ideas', { ids });
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to delete ideas');
+    }
+  },
 };

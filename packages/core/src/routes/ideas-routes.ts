@@ -131,4 +131,51 @@ fastify.get<{
       return reply.code(500).send({ error: 'Failed to update idea' });
     }
   });
+
+  // Bulk delete ideas
+  fastify.delete<{
+    Body: { ids: string[] };
+    Reply: { success: boolean } | { error: string };
+  }>('/api/ideas', async (request, reply) => {
+    try {
+      // Get user from session
+      const user = SessionUtils.getSessionUser(request);
+      if (!user) {
+        return reply.code(401).send({ error: 'Unauthorized' });
+      }
+
+      const { ids } = request.body;
+      
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return reply.code(400).send({ error: 'Invalid request: ids array is required' });
+      }
+      
+      loggingService.log({
+        level: 'INFO',
+        message: 'Bulk deleting ideas',
+        details: JSON.stringify({ userId: user.id, ideaIds: ids }),
+      });
+
+      // Check if all ideas belong to the user
+      const userIdeas = await ideaRepository.getIdeasByUser(user.id);
+      const userIdeaIds = new Set(userIdeas.map(i => i.id));
+      const invalidIds = ids.filter(id => !userIdeaIds.has(id));
+      
+      if (invalidIds.length > 0) {
+        return reply.code(403).send({ error: 'Some ideas do not belong to the user' });
+      }
+      
+      // Delete the ideas
+      await ideaRepository.deleteIdeas(ids);
+      
+      return reply.send({ success: true });
+    } catch (error) {
+      loggingService.log({
+        level: 'ERROR',
+        message: 'Failed to delete ideas',
+        details: JSON.stringify({ error: String(error) }),
+      });
+      return reply.code(500).send({ error: 'Failed to delete ideas' });
+    }
+  });
 }

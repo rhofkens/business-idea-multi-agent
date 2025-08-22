@@ -1,6 +1,6 @@
 import { db } from '../db.js';
 import { ideas, type Idea, type NewIdea, type IdeaStage } from '../schema.js';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import type { BusinessIdea } from '@business-idea/shared';
 
 export interface IdeaRepository {
@@ -11,6 +11,7 @@ export interface IdeaRepository {
   getIdeasByUser(userId: string, starred?: boolean): Promise<BusinessIdea[]>;
   getIdeaById(ideaId: string): Promise<BusinessIdea | null>;
   setStarred(ideaId: string, starred: boolean): Promise<void>;
+  deleteIdeas(ideaIds: string[]): Promise<void>;
 }
 
 export class IdeaRepositoryImpl implements IdeaRepository {
@@ -128,6 +129,14 @@ export class IdeaRepositoryImpl implements IdeaRepository {
         updatedAt: new Date(),
       })
       .where(eq(ideas.id, ideaId));
+  }
+
+  async deleteIdeas(ideaIds: string[]): Promise<void> {
+    if (ideaIds.length === 0) return;
+    
+    await db
+      .delete(ideas)
+      .where(inArray(ideas.id, ideaIds));
   }
 
   private rowToBusinessIdea(row: Idea): BusinessIdea {

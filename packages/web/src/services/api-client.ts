@@ -148,6 +148,7 @@ class ApiClient {
    *
    * @template T - Expected response data type
    * @param {string} endpoint - API endpoint path (relative to baseURL)
+   * @param {unknown} data - Optional request body data (will be JSON stringified)
    * @param {RequestInit} options - Additional fetch options
    * @returns {Promise<ApiResponse<T>>} Standardized API response
    *
@@ -159,9 +160,10 @@ class ApiClient {
    * }
    * ```
    */
-  async delete<T = unknown>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async delete<T = unknown>(endpoint: string, data?: unknown, options?: RequestInit): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
       ...options,
     });
   }

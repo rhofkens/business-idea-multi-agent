@@ -13,6 +13,23 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -46,7 +63,9 @@ import {
   DollarSign,
   Waves,
   Building,
-  Database
+  Database,
+  Trash2,
+  ChevronDown
 } from "lucide-react";
 import { SmartTableSkeleton } from "./SmartTableSkeleton";
 import { useWebSocketContext } from "@/contexts/WebSocketContext";
@@ -123,6 +142,11 @@ export function SmartTable({
   const [fieldModalOpen, setFieldModalOpen] = useState(false);
   const [fieldModalContent, setFieldModalContent] = useState<string>('');
   const [fieldModalTitle, setFieldModalTitle] = useState<string>('');
+  
+  // State for multi-select and bulk actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { events, subscribe, unsubscribe, clearEvents } = useWebSocketContext();
   const { isOpen, content, isLoading: docLoading, openDocumentation, closeDocumentation } = useDocumentationViewer();
@@ -578,6 +602,55 @@ export function SmartTable({
     openDocumentation(reportId);
   };
 
+  // Multi-select handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(filteredIdeas.map(idea => idea.id));
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectIdea = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    setIsDeleting(true);
+    try {
+      // Call API to delete selected ideas
+      await ideasApi.deleteIdeas(Array.from(selectedIds));
+      
+      // Remove deleted ideas from database ideas
+      if (!showCurrentRun) {
+        setDatabaseIdeas(prev => prev.filter(idea => !selectedIds.has(idea.id)));
+      }
+      
+      // Clear selection
+      setSelectedIds(new Set());
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('[SmartTable] Error deleting ideas:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Check if all visible ideas are selected
+  const allSelected = filteredIdeas.length > 0 && filteredIdeas.every(idea => selectedIds.has(idea.id));
+  const someSelected = filteredIdeas.some(idea => selectedIds.has(idea.id));
+
   // Format content for markdown display
   const formatOverallScoreMarkdown = (idea: BusinessIdea): string => {
     const scores = idea.scores;
@@ -777,6 +850,33 @@ ${idea.reasoning.blueOcean ? `#### Blue Ocean Reasoning\n${idea.reasoning.blueOc
           <Table className="smart-table">
             <TableHeader>
               <TableRow className="bg-muted/50">
+                <TableHead className="w-12">
+                  <div className="flex items-center gap-1">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all"
+                    />
+                    {someSelected && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem
+                            onClick={() => setDeleteDialogOpen(true)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete ({selectedIds.size})
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </TableHead>
                 <TableHead className="w-12"></TableHead>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead className="min-w-[200px]">Idea</TableHead>
@@ -795,7 +895,7 @@ ${idea.reasoning.blueOcean ? `#### Blue Ocean Reasoning\n${idea.reasoning.blueOc
             <TableBody>
               {filteredIdeas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={14} className="text-center py-8 text-muted-foreground">
                     {isDatabaseLoading ? "Loading ideas from database..." :
                      isActive ? "Generating ideas..." :
                      showCurrentRun ? "No ideas generated yet. Start by filling out the form above." :
@@ -815,9 +915,17 @@ ${idea.reasoning.blueOcean ? `#### Blue Ocean Reasoning\n${idea.reasoning.blueOc
                       key={idea.id}
                       className={cn(
                         "hover:bg-muted/50 transition-colors",
-                        newIdeaIds.has(idea.id) && "new-idea-glow"
+                        newIdeaIds.has(idea.id) && "new-idea-glow",
+                        selectedIds.has(idea.id) && "bg-muted/30"
                       )}
                     >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(idea.id)}
+                          onCheckedChange={(checked) => handleSelectIdea(idea.id, checked as boolean)}
+                          aria-label={`Select ${idea.title}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => toggleStar(idea.id)} className="h-8 w-8 p-0 group">
                           <Star className={cn("h-4 w-4 transition-colors", idea.starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground group-hover:text-yellow-400")} />
@@ -926,7 +1034,7 @@ ${idea.reasoning.blueOcean ? `#### Blue Ocean Reasoning\n${idea.reasoning.blueOc
               )}
               {isStreaming && ideas.length > 0 && (
                 <TableRow className="bg-blue-50/50 animate-pulse">
-                  <TableCell colSpan={12} className="text-center py-2">
+                  <TableCell colSpan={14} className="text-center py-2">
                     <div className="flex items-center justify-center gap-2">
                       <div className="h-2 w-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <div className="h-2 w-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -955,6 +1063,28 @@ ${idea.reasoning.blueOcean ? `#### Blue Ocean Reasoning\n${idea.reasoning.blueOc
       content={fieldModalContent}
       onClose={() => setFieldModalOpen(false)}
     />
+    
+    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Ideas</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete {selectedIds.size} selected idea{selectedIds.size !== 1 ? 's' : ''}? 
+            This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleBulkDelete} 
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
