@@ -30,3 +30,7 @@ Icon
 
 # Database
 business-ideas.db
+
+# Generated business idea reports and documentation
+docs/output/ideas/
+docs/output/business-idea-report-*.md

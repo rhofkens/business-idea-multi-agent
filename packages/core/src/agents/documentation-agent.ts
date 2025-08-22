@@ -13,6 +13,7 @@ import {
 } from '../utils/report-utilities.js';
 import { ensureOutputDirectory, ensureDirectory, writeFile } from '../utils/file-system.js';
 import { loggingService } from '../services/logging-service.js';
+import { configService } from '../services/config-service.js';
 
 /**
  * System prompt for the Documentation Agent.
@@ -114,7 +115,7 @@ FORMAT REQUIREMENTS:
 export const documentationAgent = new Agent({
   name: 'Documentation Agent',
   instructions: documentationPrompt,
-  model: 'o3',
+  model: configService.documentationModel,
 });
 
 /**

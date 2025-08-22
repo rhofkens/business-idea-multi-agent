@@ -91,23 +91,23 @@ const Index = () => {
           />
         </div>
 
-        {/* Business Ideas Analysis, Agent Progress and Terminal Output */}
+        {/* Business Ideas Table - Always visible */}
+        <div className="w-full">
+          <SmartTable
+            isActive={isGenerating}
+          />
+        </div>
+
+        {/* Agent Progress and Terminal Output - Only during generation */}
         {isGenerating && (
-          <>
-            <div className="w-full">
-              <SmartTable
-                isActive={isGenerating}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <AgentProgressDashboard />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-6">
-                <AgentProgressDashboard />
-              </div>
-              <div className="space-y-6">
-                <TerminalOutput isActive={isGenerating} />
-              </div>
+            <div className="space-y-6">
+              <TerminalOutput isActive={isGenerating} />
             </div>
-          </>
+          </div>
         )}
 
         {/* Report Dialog */}

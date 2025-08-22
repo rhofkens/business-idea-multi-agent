@@ -101,7 +101,8 @@ export function SmartTable({
   className,
   isActive,
 }: SmartTableProps) {
-  const [showCurrentRun, setShowCurrentRun] = useState(true);
+  const [showCurrentRun, setShowCurrentRun] = useState(false);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [starredIdeas, setStarredIdeas] = useState<Set<string>>(new Set());
   const [newIdeaIds, setNewIdeaIds] = useState<Set<string>>(new Set());
   const [consolidatedReportEnabled, setConsolidatedReportEnabled] = useState(false);
@@ -124,6 +125,25 @@ export function SmartTable({
       clearEvents();
       setConsolidatedReportPath(null);
       setConsolidatedReportEnabled(false);
+      // Auto-switch to current run view when generation starts
+      setShowCurrentRun(true);
+    } else {
+      // When generation completes, refresh database ideas if we're in database view
+      if (!showCurrentRun) {
+        setIsDatabaseLoading(true);
+        ideasApi.getIdeas(showStarredOnly ? true : undefined)
+          .then(response => {
+            setDatabaseIdeas(response.ideas);
+            const starredSet = new Set(response.ideas.filter(idea => idea.starred).map(idea => idea.id));
+            setStarredIdeas(starredSet);
+          })
+          .catch(error => {
+            console.error('[SmartTable] Error refreshing ideas from database:', error);
+          })
+          .finally(() => {
+            setIsDatabaseLoading(false);
+          });
+      }
     }
     return () => {
       unsubscribe("IdeationAgent");
@@ -131,13 +151,13 @@ export function SmartTable({
       unsubscribe("CriticAgent");
       unsubscribe("DocumentationAgent");
     };
-  }, [isActive, subscribe, unsubscribe, clearEvents]);
+  }, [isActive, subscribe, unsubscribe, clearEvents, showCurrentRun, showStarredOnly]);
   
-  // Load ideas from database when toggled to database mode
+  // Load ideas from database on mount and when toggled to database mode or starred filter changes
   useEffect(() => {
-    if (!showCurrentRun && databaseIdeas.length === 0) {
+    if (!showCurrentRun) {
       setIsDatabaseLoading(true);
-      ideasApi.getIdeas()
+      ideasApi.getIdeas(showStarredOnly ? true : undefined)
         .then(response => {
           setDatabaseIdeas(response.ideas);
           // Update starred ideas based on database data
@@ -151,18 +171,13 @@ export function SmartTable({
           setIsDatabaseLoading(false);
         });
     }
-  }, [showCurrentRun, ideasApi, databaseIdeas.length]);
+  }, [showCurrentRun, showStarredOnly]);
   
   // Memoize the transformation of events to ideas
   const ideas = useMemo(() => {
     const ideaMap = new Map<string, BusinessIdea>();
     
     // Define types for competitor data
-    interface CompetitorInfo {
-      name: string;
-      description: string;
-    }
-    
     interface CompetitorData {
       competitorAnalysis: string;
       blueOceanScore: number;
@@ -511,9 +526,13 @@ export function SmartTable({
   
   console.log('[SmartTable] displayIdeas:', displayIdeas.map(idea => ({ id: idea.id, starred: idea.starred })));
 
-  const filteredIdeas = displayIdeas.filter(idea =>
-    showCurrentRun ? idea.isCurrentRun : true
-  );
+  const filteredIdeas = displayIdeas.filter(idea => {
+    // Apply current run filter if in current run mode
+    if (showCurrentRun && !idea.isCurrentRun) return false;
+    // Apply starred filter if enabled and in current run mode (database mode already filtered by API)
+    if (showStarredOnly && showCurrentRun && !starredIdeas.has(idea.id)) return false;
+    return true;
+  });
 
   const handleViewConsolidatedReport = () => {
     console.log('[SmartTable] View consolidated report clicked');
@@ -600,10 +619,17 @@ export function SmartTable({
               View consolidated report
             </Button>
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="filter-toggle" className="text-sm">Live agent data</Label>
-            <Switch id="filter-toggle" checked={showCurrentRun} onCheckedChange={setShowCurrentRun} />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Star className={cn("h-4 w-4", showStarredOnly ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
+              <Label htmlFor="starred-toggle" className="text-sm">Starred only</Label>
+              <Switch id="starred-toggle" checked={showStarredOnly} onCheckedChange={setShowStarredOnly} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="filter-toggle" className="text-sm">Live agent data</Label>
+              <Switch id="filter-toggle" checked={showCurrentRun} onCheckedChange={setShowCurrentRun} />
+            </div>
           </div>
         </div>
       </CardHeader>

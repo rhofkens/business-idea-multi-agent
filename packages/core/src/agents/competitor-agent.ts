@@ -5,6 +5,7 @@ import {
   CompetitorAgentOutputSchema,
   CompetitorStreamEvent
 } from '../schemas/competitor-agent-schemas.js';
+import { configService } from '../services/config-service.js';
 
 /**
  * System prompt for competitor analysis
@@ -61,7 +62,7 @@ Return your analysis as a JSON object with these fields:
 const createCompetitorAgent = () => new Agent({
   name: 'Competitor Analysis Agent',
   instructions: competitorAnalysisPrompt,
-  model: 'o3',
+  model: configService.competitorModel,
   tools: [webSearchTool()],
 });
 

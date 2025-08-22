@@ -5,6 +5,7 @@ import {
   CriticStreamEvent
 } from '../schemas/critic-agent-schemas.js';
 import { TestCacheService } from '../services/test-cache-service.js';
+import { configService } from '../services/config-service.js';
 
 /**
  * System prompt for critical evaluation and Overall Score calculation
@@ -83,7 +84,7 @@ CRITICAL: You MUST preserve the EXACT ID from each business idea. The ID field i
 function createCriticAgent(): Agent {
   return new Agent({
     name: 'Business Critic Agent',
-    model: 'o3',
+    model: configService.criticModel,
     tools: [webSearchTool()],
     instructions: criticalEvaluationPrompt
   });

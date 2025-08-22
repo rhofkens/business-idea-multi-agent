@@ -317,6 +317,20 @@ Create a `.env` file in the root directory with the following:
 # Required for AI business idea generation
 OPENAI_API_KEY=your-api-key-here
 
+# Model Configuration (all optional, defaults to 'o3')
+# Global model for all agents - can be 'o3' or 'gpt-4o'
+LLM_MODEL=o3
+
+# Per-agent model configuration (overrides LLM_MODEL if specified)
+# Uncomment and set to use different models for specific agents
+# IDEATION_MODEL=o3          # Model for ideation agent
+# COMPETITOR_MODEL=o3        # Model for competitor analysis
+# CRITIC_MODEL=o3            # Model for business critic
+# DOCUMENTATION_MODEL=o3     # Model for documentation generation
+
+# Two-pass refinement for ideation (optional, default: true)
+USE_REFINEMENT=true
+
 # Optional: Backend server configuration
 PORT=3001
 HOST=0.0.0.0
@@ -326,6 +340,21 @@ SESSION_SECRET=your-secure-session-secret-here
 ```
 
 The core package will automatically load this configuration for both the authentication server and AI agents.
+
+#### Model Configuration Details
+
+The system supports flexible model configuration:
+
+1. **Global Configuration**: Set `LLM_MODEL` to configure all agents at once
+2. **Per-Agent Configuration**: Override the global setting for specific agents
+3. **Backward Compatibility**: The legacy `IDEATION_MODEL` variable is still supported
+4. **Supported Models**: Currently supports `o3` (default) and `gpt-4o`
+
+Configuration precedence (highest to lowest):
+- Agent-specific environment variable (e.g., `COMPETITOR_MODEL`)
+- Global `LLM_MODEL` variable
+- Legacy `IDEATION_MODEL` (for ideation agent only)
+- Default value (`o3`)
 
 ### Backend Server Configuration
 
