@@ -17,7 +17,7 @@ export async function runCriticStep({
   input,
 }: StepParams<CriticStepInput>): Promise<CriticStepResult> {
   const { enrichedIdeas } = input;
-  const { emitEvent, useTestCache, cacheEmitter } = context;
+  const { emitEvent, useTestCache, cacheEmitter, factory } = context;
 
   if (enrichedIdeas.length === 0) {
     loggingService.log({
@@ -52,8 +52,8 @@ export async function runCriticStep({
       // Initialize array to collect critically evaluated ideas
       let criticalEvaluatedIdeas: BusinessIdea[] = [];
       
-      // Iterate through the generator
-      const generator = runCriticAgent({ businessIdeas: enrichedIdeas });
+      // Iterate through the generator with factory
+      const generator = runCriticAgent({ businessIdeas: enrichedIdeas }, factory);
       let iterResult = await generator.next();
       
       console.log(`📋 Starting critical evaluation...`);

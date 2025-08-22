@@ -6,11 +6,12 @@ import {
   CompetitorStreamEvent
 } from '../schemas/competitor-agent-schemas.js';
 import { configService } from '../services/config-service.js';
+import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
 
 /**
  * System prompt for competitor analysis
  */
-const competitorAnalysisPrompt = `
+const createCompetitorAnalysisPrompt = (executionContext: string) => `
 You are a market research expert specializing in competitive analysis and Blue Ocean strategy.
 
 Your task is to analyze a single business idea and provide:
@@ -27,6 +28,8 @@ For the web search, perform searches for:
 - Market size and growth projections
 - Existing solutions in the industry
 - Technology trends relevant to the idea
+
+${executionContext}
 
 Blue Ocean Scoring Methodology:
 - competitorScore (1-10): Lower score = more competitors, Higher score = fewer competitors
@@ -58,19 +61,22 @@ Return your analysis as a JSON object with these fields:
 
 /**
  * Creates the competitor analysis agent
+ * @param executionContext - The execution mode specific context
  */
-const createCompetitorAgent = () => new Agent({
+const createCompetitorAgent = (executionContext: string) => new Agent({
   name: 'Competitor Analysis Agent',
-  instructions: competitorAnalysisPrompt,
+  instructions: createCompetitorAnalysisPrompt(executionContext),
   model: configService.competitorModel,
   tools: [webSearchTool()],
 });
 
 /**
  * Analyzes a single business idea
+ * @param idea - The business idea to analyze
+ * @param executionContext - The execution mode specific context
  */
-async function analyzeSingleIdea(idea: BusinessIdea): Promise<BusinessIdea> {
-  const agent = createCompetitorAgent();
+async function analyzeSingleIdea(idea: BusinessIdea, executionContext: string): Promise<BusinessIdea> {
+  const agent = createCompetitorAgent(executionContext);
   
   const promptText = `
 Analyze this business idea for competitors and calculate the Blue Ocean score:
@@ -124,7 +130,8 @@ Perform web searches to gather competitive intelligence, then provide your analy
  * @returns An async generator yielding stream events
  */
 export async function* runCompetitorAgent(
-  input: CompetitorAgentInput
+  input: CompetitorAgentInput,
+  factory?: ExecutionModeFactory
 ): AsyncGenerator<CompetitorStreamEvent> {
   yield { type: 'status', data: 'Starting competitor analysis...' };
 
@@ -145,7 +152,12 @@ export async function* runCompetitorAgent(
       data: `\n🔍 Searching for competitors for: ${idea.title}...\n`
     };
     
-    const analyzedIdea = await analyzeSingleIdea(idea);
+    // Get execution context from factory or use empty string for backward compatibility
+    const executionContext = factory
+      ? factory.getCompetitorContext(idea)
+      : '';
+    
+    const analyzedIdea = await analyzeSingleIdea(idea, executionContext);
     analyzedIdeas.push(analyzedIdea);
     
     // Emit the analysis result

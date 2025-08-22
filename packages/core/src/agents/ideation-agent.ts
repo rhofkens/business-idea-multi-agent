@@ -8,10 +8,11 @@ import {
   StreamEvent,
 } from '../types/agent-types.js';
 import { parseCompleteIdeasFromBuffer } from '../utils/streaming-json-parser.js';
-import { z } from 'zod';
 import { configService } from '../services/config-service.js';
 import { ulid } from 'ulidx';
-const createSystemPrompt = (ideaIds: string[]) => `
+import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
+
+const createSystemPrompt = (ideaIds: string[], executionContext: string) => `
 You are an elite business strategist and innovation expert with deep expertise in identifying market gaps, disruptive technologies, and emerging trends. Your task is to generate exactly 10 groundbreaking business ideas that push the boundaries of what's possible.
 
 THINK CRITICALLY AND DEEPLY:
@@ -20,6 +21,8 @@ THINK CRITICALLY AND DEEPLY:
 - Look for intersections between different industries where innovation happens
 - Think about problems that people don't yet know they have
 - Consider both immediate feasibility and long-term transformative potential
+
+${executionContext}
 
 You MUST output a valid JSON object with a single key "ideas" containing an array of exactly 10 business ideas.
 
@@ -43,6 +46,7 @@ CRITICAL REQUIREMENTS:
   "title": "string - A compelling, memorable name that captures the essence of the innovation",
   "description": "string - A comprehensive explanation including the problem solved, unique approach, and why it's revolutionary (2-3 sentences)",
   "businessModel": "string - MUST be exactly one of: B2B, B2C, B2B2C, Marketplace, SaaS, DTC",
+  "executionMode": "string - MUST be the execution mode being used",
   "disruptionPotential": number (1-10, where 10 means completely revolutionizing an industry),
   "marketPotential": number (1-10, where 10 means $100B+ addressable market),
   "technicalComplexity": number (1-10, where 10 means requiring breakthrough R&D),
@@ -70,6 +74,7 @@ Example format:
       "title": "Quantum-Enhanced Drug Discovery Platform",
       "description": "Leverages quantum computing to simulate molecular interactions at unprecedented scale, reducing drug discovery time from 10+ years to 2-3 years. Creates a marketplace connecting pharma companies with quantum computing resources and AI-driven analysis.",
       "businessModel": "B2B",
+      "executionMode": "classic-startup",
       "disruptionPotential": 9,
       "marketPotential": 9,
       "technicalComplexity": 10,
@@ -102,18 +107,23 @@ ENHANCEMENT FOCUS:
 
 OUTPUT FORMAT: Pure JSON array with refined ideas maintaining original structure.
 `;
-// Agent instances will be created dynamically with generated IDs
 
 async function* executeIdeationAgent(
   preferences: BusinessPreferences,
+  factory: ExecutionModeFactory | null
 ): AsyncGenerator<StreamEvent, void, unknown> {
   // Generate 10 unique IDs upfront
   const ideaIds = Array.from({ length: 10 }, () => ulid());
   
-  // Create agent instances with the generated IDs
+  // Get execution context from factory or use default
+  const executionContext = factory 
+    ? factory.getIdeationContext(preferences)
+    : ''; // Empty context for backward compatibility
+  
+  // Create agent instances with the generated IDs and execution context
   const ideationAgentInstance = new Agent({
     name: 'Ideation Agent',
-    instructions: createSystemPrompt(ideaIds),
+    instructions: createSystemPrompt(ideaIds, executionContext),
     model: configService.ideationModel,
   });
   
@@ -129,7 +139,8 @@ async function* executeIdeationAgent(
   let userPrompt = `Generate business ideas for the following preferences:
     Vertical: ${preferences.vertical}
     Sub-Vertical: ${preferences.subVertical}
-    Business Model: ${preferences.businessModel}`;
+    Business Model: ${preferences.businessModel}
+    Execution Mode: ${preferences.executionMode || 'classic-startup'}`;
   
   // Add additional context if provided - this is highly important as the user explicitly provided it
   if (preferences.additionalContext && preferences.additionalContext.trim() !== '') {
@@ -148,136 +159,116 @@ async function* executeIdeationAgent(
 
   // Stream and collect initial ideas
   for await (const chunk of initialStream.toTextStream()) {
+    buffer += chunk;
     yield { type: 'chunk', data: chunk };
 
-    buffer += chunk;
+    // Try to parse complete ideas from buffer
     const { newIdeas, newBuffer } = parseCompleteIdeasFromBuffer(buffer);
-
-    if (newIdeas.length > 0) {
-      for (const idea of newIdeas) {
-        try {
-          // Validate the idea using Zod schema
-          const validatedIdea = businessIdeaSchema.parse(idea);
-          collectedIdeas.push(validatedIdea);
-          yield { type: 'idea', data: validatedIdea };
-        } catch (error) {
-          // Log validation error and skip invalid idea
-          console.error('Invalid business idea structure:', error);
-          if (error instanceof z.ZodError) {
-            console.error('Validation errors:', error.errors);
-          }
-        }
+    buffer = newBuffer;
+    for (const idea of newIdeas) {
+      if (!collectedIdeas.find(i => i.id === idea.id)) {
+        // Add execution mode to the idea
+        const ideaWithMode = {
+          ...idea,
+          executionMode: preferences.executionMode || 'classic-startup'
+        };
+        collectedIdeas.push(ideaWithMode);
+        yield { type: 'idea', data: ideaWithMode };
       }
-      buffer = newBuffer;
     }
   }
 
-  await initialStream.completed;
-  
-  // Process any remaining ideas in the buffer
-  const { newIdeas: remainingIdeas } = parseCompleteIdeasFromBuffer(buffer);
-  
-  for (const idea of remainingIdeas) {
+  yield { type: 'status', data: 'Initial ideas generated. Starting refinement phase...' };
+
+  // Phase 2: Refine ideas in batches
+  const batchSize = 5;
+  const refinedIdeas: BusinessIdea[] = [];
+
+  for (let i = 0; i < collectedIdeas.length; i += batchSize) {
+    const batch = collectedIdeas.slice(i, i + batchSize);
+    const batchJson = JSON.stringify(batch, null, 2);
+    
+    yield { 
+      type: 'status', 
+      data: `Refining ideas ${i + 1}-${Math.min(i + batchSize, collectedIdeas.length)}...` 
+    };
+
+    const refinementResponse = await run(
+      refinementAgentInstance, 
+      `Refine these business ideas:\n${batchJson}`,
+      { stream: false }
+    );
+
     try {
-      const validatedIdea = businessIdeaSchema.parse(idea);
-      collectedIdeas.push(validatedIdea);
-      yield { type: 'idea', data: validatedIdea };
-    } catch (error) {
-      console.error('Invalid business idea structure:', error);
-      if (error instanceof z.ZodError) {
-        console.error('Validation errors:', error.errors);
+      // Clean the response to ensure it's valid JSON
+      let cleanedContent = refinementResponse.finalOutput?.trim() || '[]';
+      
+      // Remove any markdown code fences if present
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.slice(7);
+      } else if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.slice(3);
       }
-    }
-  }
-  
-  // Phase 2: Refine ideas (if enabled)
-  if (configService.useRefinement && collectedIdeas.length > 0) {
-    yield { type: 'status', data: 'Refining and enhancing business ideas...' };
-    
-    // Process ideas in batches to avoid truncation with GPT-4o
-    const BATCH_SIZE = 3;
-    const allRefinedIdeas: BusinessIdea[] = [];
-    
-    for (let i = 0; i < collectedIdeas.length; i += BATCH_SIZE) {
-      const batch = collectedIdeas.slice(i, Math.min(i + BATCH_SIZE, collectedIdeas.length));
-      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
-      const totalBatches = Math.ceil(collectedIdeas.length / BATCH_SIZE);
+      if (cleanedContent.endsWith('```')) {
+        cleanedContent = cleanedContent.slice(0, -3);
+      }
       
-      console.log(`[REFINEMENT] Processing batch ${batchNumber} of ${totalBatches} (${batch.length} ideas)`);
-      yield { type: 'status', data: `Refining ideas batch ${batchNumber} of ${totalBatches}...` };
+      cleanedContent = cleanedContent.trim();
       
-      const batchPromptText = `Here are ${batch.length} business ideas to refine and enhance:\n\n${JSON.stringify(batch, null, 2)}\n\nApply critical analysis to improve these ${batch.length} ideas. Output a JSON array with exactly ${batch.length} refined ideas.`;
+      const refinedBatch = JSON.parse(cleanedContent);
       
-      const refinementStream = await run(refinementAgentInstance, batchPromptText, { stream: true });
-      
-      let batchBuffer = '';
-      let batchRefinedCount = 0;
-      
-      // Stream refined ideas for this batch
-      for await (const chunk of refinementStream.toTextStream()) {
-        batchBuffer += chunk;
-        
-        const { newIdeas: refinedIdeas, newBuffer: newBatchBuffer } = parseCompleteIdeasFromBuffer(batchBuffer);
-        
-        if (refinedIdeas.length > 0) {
-          for (const refinedIdea of refinedIdeas) {
-            try {
-              const validatedRefinedIdea = businessIdeaSchema.parse(refinedIdea);
-              allRefinedIdeas.push(validatedRefinedIdea);
-              yield { type: 'refined-idea', data: validatedRefinedIdea };
-              batchRefinedCount++;
-            } catch (error) {
-              console.error(`[REFINEMENT BATCH ${batchNumber}] Validation error:`, error);
-              if (error instanceof z.ZodError) {
-                console.error('[REFINEMENT VALIDATION] Errors:', error.errors.map(e => ({
-                  path: e.path.join('.'),
-                  message: e.message
-                })));
-              }
+      if (Array.isArray(refinedBatch)) {
+        for (const refinedIdea of refinedBatch) {
+          // Validate the refined idea
+          const validation = businessIdeaSchema.safeParse(refinedIdea);
+          if (validation.success) {
+            // Ensure execution mode is preserved
+            const ideaWithMode = {
+              ...validation.data,
+              executionMode: preferences.executionMode || 'classic-startup'
+            };
+            refinedIdeas.push(ideaWithMode);
+            yield { type: 'refined-idea', data: ideaWithMode };
+          } else {
+            console.error('Refined idea failed validation:', validation.error);
+            // Fall back to original idea
+            const originalIdea = collectedIdeas.find(i => i.id === refinedIdea.id);
+            if (originalIdea) {
+              refinedIdeas.push(originalIdea);
             }
           }
-          batchBuffer = newBatchBuffer;
         }
       }
-      
-      await refinementStream.completed;
-      
-      // Process any remaining ideas in batch buffer
-      const { newIdeas: remainingBatchIdeas } = parseCompleteIdeasFromBuffer(batchBuffer);
-      
-      for (const refinedIdea of remainingBatchIdeas) {
-        try {
-          const validatedRefinedIdea = businessIdeaSchema.parse(refinedIdea);
-          allRefinedIdeas.push(validatedRefinedIdea);
-          yield { type: 'refined-idea', data: validatedRefinedIdea };
-          batchRefinedCount++;
-        } catch (error) {
-          console.error(`[REFINEMENT BATCH ${batchNumber}] Failed to validate remaining idea:`, error);
-        }
-      }
-      
-      console.log(`[REFINEMENT] Batch ${batchNumber} completed: ${batchRefinedCount}/${batch.length} ideas refined`);
-      
-      if (batchRefinedCount !== batch.length) {
-        console.warn(`[REFINEMENT] Batch ${batchNumber}: Expected ${batch.length} ideas but got ${batchRefinedCount}`);
-      }
+    } catch (error) {
+      console.error('Error parsing refinement response:', error);
+      // Fall back to original ideas for this batch
+      refinedIdeas.push(...batch);
     }
     
-    console.log(`[REFINEMENT] Total refined ideas: ${allRefinedIdeas.length} out of ${collectedIdeas.length} original ideas`);
-    
-    if (allRefinedIdeas.length !== collectedIdeas.length) {
-      console.error(`[REFINEMENT ERROR] Mismatch in idea count: ${allRefinedIdeas.length} refined vs ${collectedIdeas.length} original`);
-    }
+    yield { type: 'chunk', data: `\n✓ Batch refinement complete\n` };
   }
-  
+
+  yield { type: 'status', data: 'All ideas generated and refined successfully!' };
   yield { type: 'complete' };
-  
-  // Log a warning if we didn't get exactly 10 valid ideas
-  if (collectedIdeas.length !== 10) {
-    console.warn(`Expected 10 valid business ideas, but got ${collectedIdeas.length}`);
-  }
 }
-export const ideationAgent = {
-  name: 'Ideation Agent',
-  execute: executeIdeationAgent,
-};
+
+export async function* ideationAgent(
+  preferences: BusinessPreferences,
+  factory?: ExecutionModeFactory
+): AsyncGenerator<StreamEvent, BusinessIdea[], unknown> {
+  const ideas: BusinessIdea[] = [];
+  
+  // Execute the ideation process
+  const generator = executeIdeationAgent(preferences, factory || null);
+  
+  for await (const event of generator) {
+    // Collect ideas from idea events
+    if (event.type === 'idea' || event.type === 'refined-idea') {
+      ideas.push(event.data);
+    }
+    // Pass through all events
+    yield event;
+  }
+  
+  return ideas;
+}

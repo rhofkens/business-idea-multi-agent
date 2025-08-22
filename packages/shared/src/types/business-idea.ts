@@ -8,6 +8,8 @@ export interface BusinessPreferences {
   subVertical: string;
   /** The desired business model (e.g., "B2B SaaS"). */
   businessModel: string;
+  /** The execution mode for idea generation (e.g., "solopreneur", "classic-startup", or custom team composition). */
+  executionMode?: string;
   /** Additional context or constraints provided by the user. */
   additionalContext?: string;
 }
@@ -21,6 +23,8 @@ export interface BusinessIdea {
   title: string;
   description: string;
   businessModel: string;
+  /** The execution mode or team composition this idea was generated for */
+  executionMode?: string;
   disruptionPotential: number;
   marketPotential: number;
   technicalComplexity: number;

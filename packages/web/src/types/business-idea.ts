@@ -23,6 +23,8 @@ export interface BusinessIdea {
   description: string;
   /** The business model type (e.g., "B2B SaaS", "Marketplace") */
   businessModel: string;
+  /** Execution mode for the business idea (solopreneur or classic-startup) */
+  executionMode?: string;
   /** Aggregated scores for different evaluation criteria */
   scores: {
     /** Overall calculated score */

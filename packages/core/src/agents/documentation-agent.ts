@@ -14,6 +14,7 @@ import {
 import { ensureOutputDirectory, ensureDirectory, writeFile } from '../utils/file-system.js';
 import { loggingService } from '../services/logging-service.js';
 import { configService } from '../services/config-service.js';
+import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
 
 /**
  * System prompt for the Documentation Agent.
@@ -25,7 +26,7 @@ import { configService } from '../services/config-service.js';
  *
  * @constant {string}
  */
-const documentationPrompt = `
+const createDocumentationPrompt = (executionContext: string) => `
 You are a professional business documentation expert. Your task is to transform analyzed business idea data into a well-structured, investor-ready markdown report.
 
 CRITICAL RULES:
@@ -98,6 +99,8 @@ FORMAT REQUIREMENTS:
 - Include only information directly from the input
 - Maintain analytical objectivity
 - Do not add speculative content or unsupported claims
+
+${executionContext}
 `;
 
 /**
@@ -112,11 +115,17 @@ FORMAT REQUIREMENTS:
  * @property {string} instructions - System prompt defining agent behavior
  * @property {string} model - Uses 'o3' model as per architecture guidelines
  */
-export const documentationAgent = new Agent({
-  name: 'Documentation Agent',
-  instructions: documentationPrompt,
-  model: configService.documentationModel,
-});
+/**
+ * Creates the documentation agent with execution context
+ * @param executionContext - The execution mode specific context
+ */
+function createDocumentationAgent(executionContext: string) {
+  return new Agent({
+    name: 'Documentation Agent',
+    instructions: createDocumentationPrompt(executionContext),
+    model: configService.documentationModel,
+  });
+}
 
 /**
  * Generates a comprehensive markdown report section for a single business idea.
@@ -137,7 +146,7 @@ export const documentationAgent = new Agent({
  * const ideaReport = await generateIdeaReport(businessIdea, 1);
  * // Returns markdown starting with "## [Business Title]"
  */
-async function generateIdeaReport(idea: BusinessIdea, _index: number): Promise<string> {
+async function generateIdeaReport(idea: BusinessIdea, _index: number, documentationAgent: Agent): Promise<string> {
   // Extract Blue Ocean sub-scores from reasoning.blueOcean if available
   let blueOceanDetails = '';
   if (idea.reasoning.blueOcean) {
@@ -202,7 +211,7 @@ ${idea.competitorAnalysis ? `\nCompetitor Analysis:\n${idea.competitorAnalysis}`
  * const intro = await generateIntroduction(10);
  * // Returns markdown starting with "# Business Ideas Report"
  */
-async function generateIntroduction(ideaCount: number): Promise<string> {
+async function generateIntroduction(ideaCount: number, documentationAgent: Agent): Promise<string> {
   const introPrompt = `
 Generate a professional introduction section for a business ideas report.
 
@@ -274,7 +283,7 @@ async function saveIndividualIdeaFile(idea: BusinessIdea, content: string): Prom
  * const summary = await generateSummary(businessIdeas);
  * // Returns markdown starting with "## Summary and Recommendations"
  */
-async function generateSummary(ideas: BusinessIdea[]): Promise<string> {
+async function generateSummary(ideas: BusinessIdea[], documentationAgent: Agent): Promise<string> {
   // Get top 3 ideas
   const top3Ideas = getTop3Ideas(ideas);
   
@@ -353,7 +362,8 @@ Format as markdown.
  * console.log(`Report saved to: ${result.reportPath}`);
  */
 export async function* runDocumentationAgent(
-  input: DocumentationAgentInput
+  input: DocumentationAgentInput,
+  factory?: ExecutionModeFactory
 ): AsyncGenerator<DocumentationStreamEvent, DocumentationAgentOutput> {
   const startTime = Date.now();
   
@@ -384,7 +394,15 @@ export async function* runDocumentationAgent(
       agent: 'Documentation Agent',
       details: ''
     });
-    const introduction = await generateIntroduction(input.ideas.length);
+    // Get execution context from factory or use empty string for backward compatibility
+    const executionContext = factory && input.ideas.length > 0
+      ? factory.getDocumentationContext(input.ideas)
+      : '';
+    
+    // Create documentation agent with context
+    const documentationAgent = createDocumentationAgent(executionContext);
+    
+    const introduction = await generateIntroduction(input.ideas.length, documentationAgent);
     
     yield { type: 'section-generated', data: { section: 'introduction', content: introduction } };
     yield { type: 'chunk', data: '✅ Introduction section completed\n' };
@@ -420,7 +438,7 @@ export async function* runDocumentationAgent(
         details: JSON.stringify({ title: idea.title })
       });
       
-      const ideaReport = await generateIdeaReport(idea, i + 1);
+      const ideaReport = await generateIdeaReport(idea, i + 1, documentationAgent);
       ideaSections.push(ideaReport);
       
       // Save individual idea file
@@ -476,7 +494,7 @@ export async function* runDocumentationAgent(
       agent: 'Documentation Agent',
       details: ''
     });
-    const summary = await generateSummary(input.ideas);
+    const summary = await generateSummary(input.ideas, documentationAgent);
     
     yield { type: 'section-generated', data: { section: 'summary', content: summary } };
     yield { type: 'chunk', data: '✅ Summary section completed\n' };

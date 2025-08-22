@@ -1,6 +1,6 @@
-# Business Idea Generator
+# Business Idea Generator v2.5
 
-A monorepo containing a multi-agent AI system that generates and evaluates business ideas, featuring a **modern web application with authentication** and a CLI tool for business idea generation.
+A monorepo containing a multi-agent AI system that generates and evaluates business ideas, featuring a **modern web application with authentication**, **execution mode targeting** (Solopreneur vs Classic Startup), and a CLI tool for business idea generation.
 
 ## 🏗️ Monorepo Structure
 
@@ -44,6 +44,38 @@ For development and testing, use these pre-configured users:
 - **Protected routes** and authentication middleware
 - **In-memory user store** for development (easily replaceable with database)
 - **Comprehensive logging** and debug utilities
+
+## 🎯 Execution Modes (New in v2.5)
+
+The application now supports targeted business idea generation based on execution mode:
+
+### Solopreneur Mode
+Optimized for 1-3 person teams leveraging AI-assisted development:
+- **Focus**: Technical moats and AI-powered automation
+- **Target Market**: $10M-$1B TAM opportunities
+- **Key Technologies**: Claude Code, Cursor, Windsurf, v0, Bolt.new
+- **Business Models**: SaaS, API services, AI tools, developer tools
+- **Examples**: Browser extensions, Shopify apps, API services, Chrome plugins
+
+### Classic Startup Mode  
+Traditional venture-scalable businesses for 50+ person teams:
+- **Focus**: Large market opportunities with network effects
+- **Target Market**: $1B+ TAM markets
+- **Key Differentiators**: Brand, scale, partnerships
+- **Business Models**: Marketplaces, social platforms, enterprise software
+- **Examples**: B2B SaaS platforms, consumer marketplaces, fintech solutions
+
+### Intelligent Mode Detection
+The system intelligently maps descriptive team compositions to the appropriate mode:
+- Detects "solo", "1-", "2-", "3-" → Solopreneur factory
+- All other descriptions → Classic Startup factory
+- Examples: "2-founder team (LLM engineer + ex-GC)" → Solopreneur mode
+
+### UI Features
+- **Execution Mode Selector**: Choose between Solopreneur and Classic Startup in the form
+- **Smart Filtering**: Filter ideas by All, Solopreneur, or Classic Startup
+- **Rich Descriptions**: AI provides detailed team composition insights
+- **Mode Column**: Visual badges showing execution mode with tooltips
 
 ## How It Works
 
@@ -331,6 +363,11 @@ LLM_MODEL=o3
 # Two-pass refinement for ideation (optional, default: true)
 USE_REFINEMENT=true
 
+# Execution mode configuration (optional, default: solopreneur)
+# Options: solopreneur, classic-startup, or any descriptive text
+# The system will intelligently map descriptions to the appropriate factory
+DEFAULT_EXECUTION_MODE=solopreneur
+
 # Optional: Backend server configuration
 PORT=3001
 HOST=0.0.0.0
@@ -432,7 +469,27 @@ The application now includes a persistence layer using **SQLite and Drizzle ORM*
     npm run db:migrate
     ```
 
+## Changelog
+
+### v2.5 (Latest)
+- **Execution Mode System**: Added Solopreneur and Classic Startup modes with factory pattern
+- **Smart Mode Detection**: Automatic mapping of descriptive team compositions
+- **Enhanced UI Filtering**: Filter ideas by execution mode (All/Solopreneur/Classic Startup)
+- **Rich Team Descriptions**: AI provides detailed team composition insights
+- **Factory Pattern Architecture**: Clean separation of execution mode logic
+- **Context Injection**: Preserves JSON formatting while adding mode-specific context
+
+### v2.0
+- **Authentication System**: Complete session-based authentication
+- **Database Persistence**: SQLite with Drizzle ORM for data storage
+- **Web Interface**: Modern React application with real-time updates
+- **User Management**: Support for multiple user roles
+
 ## Future Enhancements
 
 - Enhanced web UI with visualization components
 - Mobile application support
+- Additional execution modes (e.g., Enterprise, Non-profit, Research)
+- Custom execution mode factory creation API
+- Machine learning-based mode recommendation
+- Historical performance analytics by execution mode

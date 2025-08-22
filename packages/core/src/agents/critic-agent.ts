@@ -6,12 +6,13 @@ import {
 } from '../schemas/critic-agent-schemas.js';
 import { TestCacheService } from '../services/test-cache-service.js';
 import { configService } from '../services/config-service.js';
+import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
 
 /**
  * System prompt for critical evaluation and Overall Score calculation
  * Implements ADR-005 methodology for final scoring
  */
-const criticalEvaluationPrompt = `
+const createCriticalEvaluationPrompt = (executionContext: string) => `
 You are a business critic expert specializing in risk assessment and critical evaluation of business ideas.
 
 Your task is to analyze a single business idea and provide:
@@ -25,6 +26,8 @@ For the web search, perform searches for:
 - Technical challenges and implementation difficulties
 - Market risks and competitive threats
 - Capital requirements and funding challenges
+
+${executionContext}
 
 Overall Score Calculation (ADR-005):
 1. Calculate base score using weighted average:
@@ -79,14 +82,15 @@ CRITICAL: You MUST preserve the EXACT ID from each business idea. The ID field i
 
 /**
  * Creates a new instance of the Business Critic Agent
+ * @param executionContext - The execution mode specific context
  * @returns A configured Agent instance with web search capabilities
  */
-function createCriticAgent(): Agent {
+function createCriticAgent(executionContext: string): Agent {
   return new Agent({
     name: 'Business Critic Agent',
     model: configService.criticModel,
     tools: [webSearchTool()],
-    instructions: criticalEvaluationPrompt
+    instructions: createCriticalEvaluationPrompt(executionContext)
   });
 }
 /**
@@ -177,11 +181,17 @@ ${idea.reasoning.blueOcean ? `- Blue Ocean: ${idea.reasoning.blueOcean}` : ''}
   * @returns An async generator yielding stream events
   */
  export async function* runCriticAgent(
-   input: CriticAgentInput
+   input: CriticAgentInput,
+   factory?: ExecutionModeFactory
  ): AsyncGenerator<CriticStreamEvent> {
    yield { type: 'status', data: 'Starting critical evaluation and risk assessment...' };
  
-   const agent = createCriticAgent();
+   // Get execution context from factory or use empty string for backward compatibility
+   const executionContext = factory && input.businessIdeas[0]
+     ? factory.getCriticContext(input.businessIdeas[0])
+     : '';
+   
+   const agent = createCriticAgent(executionContext);
    const analyzedIdeas: BusinessIdea[] = [];
    const totalIdeas = input.businessIdeas.length;
  
@@ -261,7 +271,8 @@ ${idea.reasoning.blueOcean ? `- Blue Ocean: ${idea.reasoning.blueOcean}` : ''}
   */
  export async function runCriticAgentWithCache(
    input: CriticAgentInput,
-   useTestCache = false
+   useTestCache = false,
+   factory?: ExecutionModeFactory
  ): Promise<BusinessIdea[]> {
    return TestCacheService.loadOrExecute(
      {
@@ -272,7 +283,7 @@ ${idea.reasoning.blueOcean ? `- Blue Ocean: ${idea.reasoning.blueOcean}` : ''}
        const analyzedIdeas: BusinessIdea[] = [];
        
        // Iterate through the generator
-       const generator = runCriticAgent(input);
+       const generator = runCriticAgent(input, factory);
        let iterResult = await generator.next();
        
        while (!iterResult.done) {

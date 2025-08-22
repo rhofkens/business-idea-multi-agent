@@ -18,7 +18,7 @@ export async function runDocumentationStep({
   input,
 }: StepParams<DocumentationStepInput>): Promise<DocumentationStepResult> {
   const { criticallyEvaluatedIdeas } = input;
-  const { emitEvent, useTestCache, cacheEmitter } = context;
+  const { emitEvent, useTestCache, cacheEmitter, factory } = context;
 
   if (criticallyEvaluatedIdeas.length === 0) {
     loggingService.log({
@@ -50,7 +50,7 @@ export async function runDocumentationStep({
       console.log('\n🔷 Step 5: Documentation Agent');
       console.log('📝 Generating comprehensive business idea report...\n');
       
-      const generator = runDocumentationAgent({ ideas: criticallyEvaluatedIdeas });
+      const generator = runDocumentationAgent({ ideas: criticallyEvaluatedIdeas }, factory);
       let iterResult = await generator.next();
       let result: DocumentationAgentOutput | null = null;
       

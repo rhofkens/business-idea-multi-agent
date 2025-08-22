@@ -15,6 +15,7 @@ interface FormData {
   vertical: string;
   subVertical: string;
   businessModel: string;
+  executionMode: string;
   additionalContext: string;
 }
 
@@ -29,6 +30,7 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
     vertical: "",
     subVertical: "",
     businessModel: "",
+    executionMode: "solopreneur", // Default to solopreneur
     additionalContext: "",
   });
 
@@ -61,6 +63,7 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
     if (!formData.vertical) newErrors.vertical = "Vertical is required";
     if (!formData.subVertical) newErrors.subVertical = "Sub-vertical is required";
     if (!formData.businessModel) newErrors.businessModel = "Business model is required";
+    if (!formData.executionMode) newErrors.executionMode = "Execution mode is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -201,23 +204,45 @@ export function IdeaGenerationForm({ onSubmit, isGenerating = false }: IdeaGener
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="businessModel">Business Model</Label>
-            <Select value={formData.businessModel} onValueChange={handleBusinessModelChange}>
-              <SelectTrigger id="businessModel" className={errors.businessModel ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select a business model" />
-              </SelectTrigger>
-              <SelectContent>
-                {businessOptions?.businessModels.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.name}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="businessModel">Business Model</Label>
+              <Select value={formData.businessModel} onValueChange={handleBusinessModelChange}>
+                <SelectTrigger id="businessModel" className={errors.businessModel ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select a business model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {businessOptions?.businessModels.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.businessModel && (
+                <p className="text-sm text-red-500">{errors.businessModel}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="executionMode">Execution Mode</Label>
+              <Select value={formData.executionMode} onValueChange={(value) => setFormData(prev => ({ ...prev, executionMode: value }))}>
+                <SelectTrigger id="executionMode" className={errors.executionMode ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select execution mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="solopreneur">
+                    Solo Entrepreneur (1-3 people)
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.businessModel && (
-              <p className="text-sm text-red-500">{errors.businessModel}</p>
-            )}
+                  <SelectItem value="classic-startup">
+                    Classic Startup (50+ people)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.executionMode && (
+                <p className="text-sm text-red-500">{errors.executionMode}</p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

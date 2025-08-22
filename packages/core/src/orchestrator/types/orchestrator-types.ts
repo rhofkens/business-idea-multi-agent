@@ -2,6 +2,7 @@ import type { BusinessIdea, BusinessPreferences, WorkflowEvent } from '@business
 import type { WebSocketSessionManager } from '../../services/websocket-session-manager.js';
 import type { WebSocketCacheEmitter } from '../../services/websocket-cache-emitter.js';
 import type { DocumentationAgentOutput } from '../../types/agent-types.js';
+import type { ExecutionModeFactory } from '../../execution-modes/base/ExecutionModeFactory.js';
 
 /**
  * Context passed to each orchestrator step
@@ -20,6 +21,7 @@ export interface StepContext {
     metadata?: WorkflowEvent['metadata']
   ) => void;
   useTestCache: boolean;
+  factory: ExecutionModeFactory;
 }
 
 /**

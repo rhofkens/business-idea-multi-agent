@@ -32,6 +32,11 @@ export const BusinessPreferencesRequestSchema = Type.Object({
     description: 'Business model type',
     examples: ['subscription', 'marketplace', 'freemium', 'advertising', 'transaction', 'licensing', 'direct-sales', 'affiliate']
   }),
+  executionMode: Type.Optional(Type.String({
+    description: 'Execution mode for the business idea generation (solopreneur or classic-startup)',
+    default: 'solopreneur',
+    enum: ['solopreneur', 'classic-startup']
+  })),
   additionalContext: Type.String({
     description: 'Additional context or requirements for the business idea',
     default: ''
@@ -74,6 +79,7 @@ export const PreferencesResponseSchema = Type.Object({
     vertical: Type.String(),
     subVertical: Type.String(),
     businessModel: Type.String(),
+    executionMode: Type.Optional(Type.String()),
     additionalContext: Type.String()
   })
 });

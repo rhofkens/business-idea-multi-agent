@@ -14,6 +14,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -103,6 +110,7 @@ export function SmartTable({
 }: SmartTableProps) {
   const [showCurrentRun, setShowCurrentRun] = useState(false);
   const [showStarredOnly, setShowStarredOnly] = useState(false);
+  const [executionModeFilter, setExecutionModeFilter] = useState<'all' | 'solopreneur' | 'classic-startup'>('all');
   const [starredIdeas, setStarredIdeas] = useState<Set<string>>(new Set());
   const [newIdeaIds, setNewIdeaIds] = useState<Set<string>>(new Set());
   const [consolidatedReportEnabled, setConsolidatedReportEnabled] = useState(false);
@@ -531,6 +539,21 @@ export function SmartTable({
     if (showCurrentRun && !idea.isCurrentRun) return false;
     // Apply starred filter if enabled and in current run mode (database mode already filtered by API)
     if (showStarredOnly && showCurrentRun && !starredIdeas.has(idea.id)) return false;
+    // Apply execution mode filter
+    if (executionModeFilter !== 'all') {
+      const ideaMode = idea.executionMode?.toLowerCase() || '';
+      if (executionModeFilter === 'solopreneur') {
+        // Check if it's solopreneur mode or similar (1-3 person team)
+        if (!ideaMode.includes('solo') && !ideaMode.includes('1-') && !ideaMode.includes('2-') && !ideaMode.includes('3-') && ideaMode !== 'solopreneur') {
+          return false;
+        }
+      } else if (executionModeFilter === 'classic-startup') {
+        // Check if it's classic startup mode or larger team
+        if (ideaMode.includes('solo') || ideaMode.includes('1-') || ideaMode.includes('2-') || ideaMode.includes('3-') || ideaMode === 'solopreneur') {
+          return false;
+        }
+      }
+    }
     return true;
   });
 
@@ -621,6 +644,19 @@ export function SmartTable({
           </CardTitle>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={executionModeFilter} onValueChange={(value: 'all' | 'solopreneur' | 'classic-startup') => setExecutionModeFilter(value)}>
+                <SelectTrigger className="w-[160px] h-8">
+                  <SelectValue placeholder="Filter by mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ideas</SelectItem>
+                  <SelectItem value="solopreneur">Solopreneur</SelectItem>
+                  <SelectItem value="classic-startup">Classic Startup</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
               <Star className={cn("h-4 w-4", showStarredOnly ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground")} />
               <Label htmlFor="starred-toggle" className="text-sm">Starred only</Label>
               <Switch id="starred-toggle" checked={showStarredOnly} onCheckedChange={setShowStarredOnly} />
@@ -641,6 +677,7 @@ export function SmartTable({
                 <TableHead className="w-12"></TableHead>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead className="min-w-[200px]">Idea</TableHead>
+                <TableHead className="w-32">Mode</TableHead>
                 <TableHead className="w-24">Overall</TableHead>
                 <TableHead className="w-24">Disruption</TableHead>
                 <TableHead className="w-24">Market</TableHead>
@@ -655,7 +692,7 @@ export function SmartTable({
             <TableBody>
               {filteredIdeas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
                     {isDatabaseLoading ? "Loading ideas from database..." :
                      isActive ? "Generating ideas..." :
                      showCurrentRun ? "No ideas generated yet. Start by filling out the form above." :
@@ -694,6 +731,37 @@ export function SmartTable({
                             </Tooltip>
                           </TooltipProvider>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant={
+                                  idea.executionMode?.toLowerCase().includes('solo') || 
+                                  idea.executionMode?.includes('1-') || 
+                                  idea.executionMode?.includes('2-') || 
+                                  idea.executionMode?.includes('3-') ||
+                                  idea.executionMode === 'solopreneur' 
+                                    ? 'secondary' 
+                                    : 'default'
+                                } 
+                                className="whitespace-nowrap cursor-help"
+                              >
+                                {(() => {
+                                  const mode = idea.executionMode?.toLowerCase() || '';
+                                  if (mode === 'solopreneur' || mode.includes('solo')) return 'Solo';
+                                  if (mode === 'classic-startup') return 'Startup';
+                                  if (mode.includes('1-') || mode.includes('2-') || mode.includes('3-')) return 'Small Team';
+                                  return 'Startup';
+                                })()}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="text-sm">{idea.executionMode || 'Not specified'}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell>{renderScoreCell(idea.scores.overall, idea.reasoning.overall, 'overall')}</TableCell>
                       <TableCell>{renderScoreCell(idea.scores.disruption, idea.reasoning.disruption, 'disruption')}</TableCell>

@@ -17,7 +17,7 @@ export async function runIdeationStep({
   input,
 }: StepParams<IdeationStepInput>): Promise<IdeationStepResult> {
   const { preferences } = input;
-  const { emitEvent, useTestCache, cacheEmitter } = context;
+  const { emitEvent, useTestCache, cacheEmitter, factory } = context;
 
   loggingService.log({
     level: 'INFO',
@@ -44,7 +44,7 @@ export async function runIdeationStep({
     async () => {
       const collectedIdeas: BusinessIdea[] = [];
       
-      for await (const event of ideationAgent.execute(preferences)) {
+      for await (const event of ideationAgent(preferences, factory)) {
         switch (event.type) {
           case 'chunk':
             process.stdout.write(event.data);

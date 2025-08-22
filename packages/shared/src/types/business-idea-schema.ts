@@ -5,6 +5,7 @@ export const businessIdeaSchema = z.object({
   title: z.string(),
   description: z.string(),
   businessModel: z.string(),
+  executionMode: z.string().optional(),
   disruptionPotential: z.number().min(1).max(10),
   marketPotential: z.number().min(1).max(10),
   technicalComplexity: z.number().min(1).max(10),

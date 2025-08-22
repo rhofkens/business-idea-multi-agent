@@ -68,7 +68,7 @@ export async function registerPreferencesRoutes(app: FastifyInstance): Promise<v
     reply: FastifyReply
   ) => {
     try {
-      const { vertical, subVertical, businessModel, additionalContext } = request.body;
+      const { vertical, subVertical, businessModel, executionMode, additionalContext } = request.body;
 
       // Validate subVertical belongs to the selected vertical
       const isValid = validateSubverticalsForVertical(vertical, [subVertical]);
@@ -99,6 +99,7 @@ export async function registerPreferencesRoutes(app: FastifyInstance): Promise<v
         vertical,
         subVertical,
         businessModel,
+        executionMode: executionMode || 'solopreneur', // Default to solopreneur if not provided
         additionalContext
       };
 
@@ -108,7 +109,7 @@ export async function registerPreferencesRoutes(app: FastifyInstance): Promise<v
       loggingService.log({
         level: 'INFO',
         message: 'Business preferences received',
-        details: `Process ID: ${processId}, Vertical: ${vertical}, SubVertical: ${subVertical}, BusinessModel: ${businessModel}`
+        details: `Process ID: ${processId}, Vertical: ${vertical}, SubVertical: ${subVertical}, BusinessModel: ${businessModel}, ExecutionMode: ${executionMode || 'solopreneur'}`
       });
 
       // Trigger agent workflow asynchronously (ADR-002)
@@ -152,6 +153,7 @@ export async function registerPreferencesRoutes(app: FastifyInstance): Promise<v
           vertical,
           subVertical,
           businessModel,
+          executionMode: executionMode || 'solopreneur',
           additionalContext
         }
       });

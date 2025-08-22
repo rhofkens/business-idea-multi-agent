@@ -17,7 +17,7 @@ export async function runCompetitorStep({
   input,
 }: StepParams<CompetitorStepInput>): Promise<CompetitorStepResult> {
   const { refinedIdeas } = input;
-  const { emitEvent, useTestCache, cacheEmitter } = context;
+  const { emitEvent, useTestCache, cacheEmitter, factory } = context;
 
   if (refinedIdeas.length === 0) {
     loggingService.log({
@@ -52,8 +52,8 @@ export async function runCompetitorStep({
       // Initialize array to collect enriched ideas
       let competitorEnrichedIdeas: BusinessIdea[] = [];
       
-      // Iterate through the generator
-      const generator = runCompetitorAgent({ businessIdeas: refinedIdeas });
+      // Iterate through the generator with factory
+      const generator = runCompetitorAgent({ businessIdeas: refinedIdeas }, factory);
       let iterResult = await generator.next();
       
       console.log(`📋 Starting competitor analysis...`);

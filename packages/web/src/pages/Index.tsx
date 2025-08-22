@@ -76,7 +76,7 @@ const Index = () => {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Business Idea Generator v2.0
+            Business Idea Generator v2.5
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             AI-powered business idea generation with real-time agent orchestration and comprehensive analysis

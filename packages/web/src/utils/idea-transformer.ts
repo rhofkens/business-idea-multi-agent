@@ -65,6 +65,7 @@ export function transformBusinessIdea(
     name: backendIdea.title, // Using title as name since backend doesn't have separate name field
     description: backendIdea.description,
     businessModel: backendIdea.businessModel,
+    executionMode: backendIdea.executionMode,
     
     // Map individual score fields to nested scores object
     scores: {

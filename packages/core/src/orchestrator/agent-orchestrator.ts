@@ -4,6 +4,10 @@ import type { WorkflowEvent } from '@business-idea/shared';
 import { WebSocketSessionManager } from '../services/websocket-session-manager.js';
 import { WebSocketCacheEmitter } from '../services/websocket-cache-emitter.js';
 import { runRepository } from '../data/repositories/run-repository.js';
+import { ExecutionModeRegistry } from '../execution-modes/registry/ExecutionModeRegistry.js';
+import { SolopreneurModeFactory } from '../execution-modes/solopreneur/SolopreneurModeFactory.js';
+import { ClassicStartupModeFactory } from '../execution-modes/classic-startup/ClassicStartupModeFactory.js';
+import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
 
 // Import step functions
 import { runIdeationStep } from './steps/ideation-step.js';
@@ -21,12 +25,18 @@ export class AgentOrchestrator {
   private wsManager = WebSocketSessionManager.getInstance();
   private sessionId?: string;
   private cacheEmitter: WebSocketCacheEmitter;
+  private registry: ExecutionModeRegistry;
 
   constructor() {
     this.cacheEmitter = new WebSocketCacheEmitter(
       (type, agentName, message, level, metadata) =>
         this.emitEvent(type, agentName, message, level, metadata)
     );
+    
+    // Initialize the execution mode registry
+    this.registry = new ExecutionModeRegistry();
+    this.registry.register(new SolopreneurModeFactory());
+    this.registry.register(new ClassicStartupModeFactory());
   }
 
   /**
@@ -75,6 +85,27 @@ export class AgentOrchestrator {
         this.emitEvent('status', 'Orchestrator', `Created run ${runId} for user ${userId}`);
       }
 
+      // Get the execution mode factory
+      const executionMode = preferences.executionMode || 'classic-startup';
+      let factory: ExecutionModeFactory;
+      
+      // Try to get exact match first, otherwise map to closest factory
+      try {
+        factory = this.registry.getFactory(executionMode);
+      } catch {
+        // Map descriptive execution modes to our registered factories
+        const lowerMode = executionMode.toLowerCase();
+        if (lowerMode.includes('solo') || lowerMode.includes('1-') || lowerMode.includes('2-') || lowerMode.includes('3-')) {
+          factory = this.registry.getFactory('solopreneur');
+          this.emitEvent('status', 'Orchestrator', `Mapped execution mode "${executionMode}" to solopreneur factory`);
+        } else {
+          factory = this.registry.getFactory('classic-startup');
+          this.emitEvent('status', 'Orchestrator', `Mapped execution mode "${executionMode}" to classic-startup factory`);
+        }
+      }
+      
+      this.emitEvent('status', 'Orchestrator', `Using execution mode: ${executionMode}`);
+      
       // Create the step context to be shared across all steps
       const context: StepContext = {
         sessionId: this.sessionId,
@@ -83,10 +114,11 @@ export class AgentOrchestrator {
         wsManager: this.wsManager,
         cacheEmitter: this.cacheEmitter,
         emitEvent: this.emitEvent.bind(this),
-        useTestCache
+        useTestCache,
+        factory
       };
 
-      // Step 1: Run Ideation Agent
+      // Step 1: Run Ideation Agent with factory
       const ideationResult = await runIdeationStep({
         context,
         input: { preferences }
