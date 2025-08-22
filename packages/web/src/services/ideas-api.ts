@@ -18,6 +18,7 @@ export interface IdeaResponse {
   title: string;
   description: string;
   businessModel: string;
+  executionMode?: string;
   disruptionPotential: number;
   marketPotential: number;
   technicalComplexity: number;
@@ -61,6 +62,7 @@ function transformIdeaResponse(idea: IdeaResponse): BusinessIdea {
     name: idea.title, // For backward compatibility
     description: idea.description,
     businessModel: idea.businessModel,
+    executionMode: idea.executionMode,
     scores: {
       overall: idea.overallScore,
       disruption: idea.disruptionPotential,

@@ -18,6 +18,7 @@ export const ideas = sqliteTable('ideas', {
   title: text('title').notNull(),
   description: text('description').notNull(),
   businessModel: text('businessModel').notNull(),
+  executionMode: text('executionMode'),
   disruptionPotential: integer('disruptionPotential').notNull(),
   marketPotential: integer('marketPotential').notNull(),
   technicalComplexity: integer('technicalComplexity').notNull(),
