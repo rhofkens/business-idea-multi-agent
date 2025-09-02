@@ -109,7 +109,10 @@ export function SmartTableRow({
             <TooltipTrigger asChild>
               <Badge 
                 variant={isSolopreneurMode(idea.executionMode) ? 'secondary' : 'default'} 
-                className="whitespace-nowrap cursor-help"
+                className={cn(
+                  "whitespace-nowrap cursor-help",
+                  isSolopreneurMode(idea.executionMode) && "bg-orange-500 text-white hover:bg-orange-600"
+                )}
               >
                 {getExecutionModeLabel(idea.executionMode)}
               </Badge>
