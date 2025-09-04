@@ -1,4 +1,4 @@
-import { Agent, run, webSearchTool } from '@openai/agents';
+import { run, Agent } from '@openai/agents';
 import { BusinessIdea } from '@business-idea/shared';
 import {
   CriticAgentInput,
@@ -7,6 +7,7 @@ import {
 import { TestCacheService } from '../services/test-cache-service.js';
 import { configService } from '../services/config-service.js';
 import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
+import { OpenAIDirectFactory } from '../factories/openai-direct-factory.js';
 
 /**
  * System prompt for critical evaluation and Overall Score calculation
@@ -53,7 +54,16 @@ Overall Score Calculation (ADR-005):
 IMPORTANT: Return ONLY valid JSON without any markdown formatting, code fences, or explanatory text.
 Your response must start with { and end with }
 
-Return your analysis as a JSON object with these fields:
+CRITICAL JSON FORMAT REQUIREMENTS:
+- Return ONLY valid JSON, no markdown formatting
+- Do NOT wrap the JSON in \`\`\`json tags
+- Ensure all strings are properly escaped
+- IMPORTANT: Keep total response under 12000 characters to avoid truncation
+- If analysis is long, prioritize key points and summarize secondary details
+- Use double quotes for all property names and string values
+- Do not include trailing commas
+
+Return your analysis as a PURE JSON object with these fields:
 {
   "id": "EXACT ID from the input - DO NOT CHANGE",
   "title": "Original title",
@@ -82,16 +92,20 @@ CRITICAL: You MUST preserve the EXACT ID from each business idea. The ID field i
 
 /**
  * Creates a new instance of the Business Critic Agent
+ * Always uses OpenAI for web search capability
  * @param executionContext - The execution mode specific context
  * @returns A configured Agent instance with web search capabilities
  */
-function createCriticAgent(executionContext: string): Agent {
-  return new Agent({
+function createCriticAgent(executionContext: string) {
+  // Always use OpenAI for critic agent (web search requirement)
+  const openAIModel = configService.getOpenAIModelForWebSearchAgent('critic');
+  
+  return OpenAIDirectFactory.createAgent({
     name: 'Business Critic Agent',
-    model: configService.criticModel,
-    tools: [webSearchTool()],
-    instructions: createCriticalEvaluationPrompt(executionContext)
-  });
+    instructions: createCriticalEvaluationPrompt(executionContext),
+    model: openAIModel,
+    enableWebSearch: configService.enableWebSearch
+  }, OpenAIDirectFactory.validateApiKey());
 }
 /**
  * Analyzes a single business idea and generates critical evaluation.
@@ -131,8 +145,15 @@ ${idea.reasoning.blueOcean ? `- Blue Ocean: ${idea.reasoning.blueOcean}` : ''}
     throw new Error('No response from critic agent');
   }
 
+  console.log(`[Critic Agent] Raw response length for "${idea.title}": ${content.length} characters`);
+
   // Clean the content - remove markdown code fences if present
   let cleanedContent = content.trim();
+  
+  // Log if markdown fences are detected
+  if (cleanedContent.startsWith('```json') || cleanedContent.startsWith('```')) {
+    console.log(`[Critic Agent] Detected markdown code fences in response for "${idea.title}"`);
+  }
   
   // Remove markdown code fences
   if (cleanedContent.startsWith('```json')) {
@@ -146,21 +167,164 @@ ${idea.reasoning.blueOcean ? `- Blue Ocean: ${idea.reasoning.blueOcean}` : ''}
   }
   
   cleanedContent = cleanedContent.trim();
+  
+  // Log first 200 chars of cleaned content for debugging
+  console.log(`[Critic Agent] First 200 chars of cleaned content: ${cleanedContent.substring(0, 200)}...`);
 
-  // Parse JSON response
-  const evaluationData = JSON.parse(cleanedContent);
+  // More robust JSON parsing with fallback
+  let evaluationData: {
+    criticalAnalysis: string;
+    riskAdjustment: number;
+    overallReasoning: string;
+    overallScore?: number;
+  };
+  try {
+    evaluationData = JSON.parse(cleanedContent);
+    console.log(`[Critic Agent] Successfully parsed JSON for "${idea.title}"`);
+  } catch (parseError) {
+    console.error(`[Critic Agent] Initial JSON parse failed for "${idea.title}":`, parseError instanceof Error ? parseError.message : 'Unknown error');
+    console.log(`[Critic Agent] Response length: ${cleanedContent.length} chars`);
+    
+    // Check if response appears truncated
+    const openBraces = (cleanedContent.match(/\{/g) || []).length;
+    const closeBraces = (cleanedContent.match(/\}/g) || []).length;
+    
+    if (openBraces > closeBraces) {
+      console.warn(`[Critic Agent] JSON appears truncated - missing ${openBraces - closeBraces} closing brace(s)`);
+      if (cleanedContent.length > 12000) {
+        console.error(`[Critic Agent] WARNING: Response is ${cleanedContent.length} chars - likely hit token limit!`);
+      }
+    }
+    
+    console.log(`[Critic Agent] Attempting fallback parsing...`);
+    // Try to extract JSON from partial or malformed response
+    // More aggressive JSON extraction - look for opening brace to end of string
+    const jsonMatch = cleanedContent.match(/\{[\s\S]*$/);
+    if (jsonMatch) {
+      console.log(`[Critic Agent] Found JSON-like structure, attempting to clean and parse...`);
+      try {
+        // Clean up common issues: trailing commas, unescaped quotes
+        let jsonStr = jsonMatch[0];
+        
+        // Remove trailing commas before } or ]
+        jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+        
+        // Check if we're in the middle of a string value and close it
+        // Look for unclosed quotes
+        const quoteCount = (jsonStr.match(/"/g) || []).length;
+        if (quoteCount % 2 !== 0) {
+          // Odd number of quotes means we have an unclosed string
+          // Find the last quote and close the string properly
+          jsonStr = jsonStr + '"';
+          console.log(`[Critic Agent] Fixed unclosed string by adding closing quote`);
+        }
+        
+        // Fix incomplete property values at the end
+        // If the JSON ends with : or , it's incomplete
+        if (jsonStr.match(/[,:]\s*$/)) {
+          jsonStr = jsonStr.replace(/[,:]\s*$/, '');
+          console.log(`[Critic Agent] Removed trailing colon or comma`);
+        }
+        
+        // Fix truncated JSON by adding missing closing braces and brackets
+        const openBraces = (jsonStr.match(/\{/g) || []).length;
+        const closeBraces = (jsonStr.match(/\}/g) || []).length;
+        const openBrackets = (jsonStr.match(/\[/g) || []).length;
+        const closeBrackets = (jsonStr.match(/\]/g) || []).length;
+        
+        // Add missing brackets first (inner structures)
+        if (openBrackets > closeBrackets) {
+          jsonStr = jsonStr + ']'.repeat(openBrackets - closeBrackets);
+          console.log(`[Critic Agent] Added ${openBrackets - closeBrackets} missing closing bracket(s)`);
+        }
+        
+        // Then add missing braces (outer structures)
+        if (openBraces > closeBraces) {
+          jsonStr = jsonStr + '}'.repeat(openBraces - closeBraces);
+          console.log(`[Critic Agent] Added ${openBraces - closeBraces} missing closing brace(s)`);
+        }
+        
+        // Try parsing again
+        evaluationData = JSON.parse(jsonStr);
+        console.log(`[Critic Agent] Fallback parsing successful for "${idea.title}"`);
+      } catch (secondError) {
+        console.error(`[Critic Agent] Fallback parsing also failed for "${idea.title}":`, secondError instanceof Error ? secondError.message : 'Unknown error');
+        console.log(`[Critic Agent] Last 500 chars of JSON: ...${jsonMatch[0].substring(Math.max(0, jsonMatch[0].length - 500))}`);
+        
+        // Try one more time with more aggressive extraction
+        // Extract just the essential fields we need
+        try {
+          console.log(`[Critic Agent] Attempting field extraction as last resort...`);
+          
+          // Extract critical analysis
+          const criticalAnalysisMatch = cleanedContent.match(/"criticalAnalysis"\s*:\s*"([^"]*)"/);
+          const criticalAnalysis = criticalAnalysisMatch ? criticalAnalysisMatch[1] : "Analysis could not be completed due to response formatting issues.";
+          
+          // Extract overall score
+          const overallScoreMatch = cleanedContent.match(/"overallScore"\s*:\s*([\d.]+)/);
+          const overallScore = overallScoreMatch ? parseFloat(overallScoreMatch[1]) : null;
+          
+          // Extract risk adjustment
+          const riskAdjustmentMatch = cleanedContent.match(/"riskAdjustment"\s*:\s*(-?[\d.]+)/);
+          const riskAdjustment = riskAdjustmentMatch ? parseFloat(riskAdjustmentMatch[1]) : 0;
+          
+          // Extract overall reasoning
+          const overallReasoningMatch = cleanedContent.match(/"overall"\s*:\s*"([^"]*)"/);
+          const overallReasoning = overallReasoningMatch ? overallReasoningMatch[1] : "Default assessment applied due to parsing errors.";
+          
+          evaluationData = {
+            criticalAnalysis,
+            riskAdjustment,
+            overallReasoning,
+            overallScore: overallScore || undefined
+          };
+          
+          console.log(`[Critic Agent] Field extraction successful for "${idea.title}"`);
+        } catch (_extractError) {
+          console.error(`[Critic Agent] Field extraction also failed for "${idea.title}"`);
+          // Final fallback to defaults
+          evaluationData = {
+            criticalAnalysis: "Analysis could not be completed due to response formatting issues.",
+            riskAdjustment: 0,
+            overallReasoning: "Default assessment applied due to parsing errors."
+          };
+        }
+      }
+    } else {
+      // No JSON found, use defaults
+      console.error(`[Critic Agent] No JSON structure found in response for "${idea.title}"`);
+      console.log(`[Critic Agent] Response preview: ${cleanedContent.substring(0, 500)}...`);
+      console.warn(`[Critic Agent] Using default values for "${idea.title}"`);
+      evaluationData = {
+        criticalAnalysis: "Analysis could not be completed due to response formatting issues.",
+        riskAdjustment: 0,
+        overallReasoning: "Default assessment applied due to parsing errors."
+      };
+    }
+  }
   
   // Calculate the overall score based on ADR-005
-  const baseScore =
-    (0.20 * idea.disruptionPotential) +
-    (0.25 * idea.marketPotential) +
-    (0.15 * (10 - idea.technicalComplexity)) +
-    (0.15 * (10 - idea.capitalIntensity)) +
-    (0.25 * (idea.blueOceanScore || 5)); // Default to 5 if not present
-    
-  // Extract risk adjustment from evaluation
-  const riskAdjustment = evaluationData.riskAdjustment || 0;
-  const overallScore = Math.max(0, Math.min(10, baseScore + riskAdjustment));
+  // Use the extracted overallScore if available, otherwise calculate it
+  let overallScore: number;
+  
+  if ('overallScore' in evaluationData && evaluationData.overallScore !== null && evaluationData.overallScore !== undefined) {
+    // Use the extracted overall score from the response
+    overallScore = evaluationData.overallScore;
+    console.log(`[Critic Agent] Using extracted overallScore: ${overallScore}`);
+  } else {
+    // Calculate it manually as fallback
+    const baseScore =
+      (0.20 * idea.disruptionPotential) +
+      (0.25 * idea.marketPotential) +
+      (0.15 * (10 - idea.technicalComplexity)) +
+      (0.15 * (10 - idea.capitalIntensity)) +
+      (0.25 * (idea.blueOceanScore || 5)); // Default to 5 if not present
+      
+    // Extract risk adjustment from evaluation
+    const riskAdjustment = evaluationData.riskAdjustment || 0;
+    overallScore = Math.max(0, Math.min(10, baseScore + riskAdjustment));
+    console.log(`[Critic Agent] Calculated overallScore: ${overallScore} (base: ${baseScore}, risk: ${riskAdjustment})`);
+  }
   
   // Return the enhanced business idea with critical analysis
   return {

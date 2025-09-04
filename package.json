@@ -46,7 +46,9 @@
     "typescript-eslint": "^8.36.0"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.9",
     "@openai/agents": "^0.0.10",
+    "ai": "^5.0.30",
     "dotenv": "^17.1.0",
     "node-fetch": "^3.3.2",
     "zod": "^3.25.76"

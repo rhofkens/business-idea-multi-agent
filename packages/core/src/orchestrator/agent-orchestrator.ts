@@ -8,6 +8,7 @@ import { ExecutionModeRegistry } from '../execution-modes/registry/ExecutionMode
 import { SolopreneurModeFactory } from '../execution-modes/solopreneur/SolopreneurModeFactory.js';
 import { ClassicStartupModeFactory } from '../execution-modes/classic-startup/ClassicStartupModeFactory.js';
 import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
+import { validateStartupConfiguration } from '../utils/startup-validation.js';
 
 // Import step functions
 import { runIdeationStep } from './steps/ideation-step.js';
@@ -74,6 +75,9 @@ export class AgentOrchestrator {
    */
   public async runChain(preferences: BusinessPreferences, useTestCache = false, sessionId?: string, userId?: string): Promise<string> {
     this.sessionId = sessionId;
+
+    // Validate configuration on first run
+    validateStartupConfiguration();
 
     try {
       // Create a run in the database if userId is provided

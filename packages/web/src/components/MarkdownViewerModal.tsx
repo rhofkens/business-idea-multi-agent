@@ -83,7 +83,21 @@ export function MarkdownViewerModal({
           
           {content && !isLoading && !error && (
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a: ({ href, children }) => (
+                    <a 
+                      href={href} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-600 underline"
+                    >
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
                 {content}
               </ReactMarkdown>
             </div>

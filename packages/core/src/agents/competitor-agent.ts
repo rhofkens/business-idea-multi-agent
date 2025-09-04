@@ -1,4 +1,4 @@
-import { Agent, run, webSearchTool } from '@openai/agents';
+import { run } from '@openai/agents';
 import { BusinessIdea } from '@business-idea/shared';
 import {
   CompetitorAgentInput,
@@ -7,6 +7,7 @@ import {
 } from '../schemas/competitor-agent-schemas.js';
 import { configService } from '../services/config-service.js';
 import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
+import { OpenAIDirectFactory } from '../factories/openai-direct-factory.js';
 
 /**
  * System prompt for competitor analysis
@@ -31,13 +32,26 @@ For the web search, perform searches for:
 
 ${executionContext}
 
+IMPORTANT FORMATTING REQUIREMENTS:
+1. When mentioning competitors or companies, include their website URLs as hyperlinks
+2. Format links as markdown: [Company Name](https://www.example.com)
+3. Include at least 3-5 competitor links with their actual websites
+4. Example: "Major competitors include [Salesforce](https://www.salesforce.com) in the CRM space..."
+
 Blue Ocean Scoring Methodology:
 - competitorScore (1-10): Lower score = more competitors, Higher score = fewer competitors
 - saturationScore (1-10): Lower score = saturated market, Higher score = open market
 - innovationScore (1-10): Based on technical/business model innovation
 - Final score = (0.4×competitorScore) + (0.3×saturationScore) + (0.3×innovationScore)
 
-Return your analysis as a JSON object with these fields:
+CRITICAL JSON FORMAT REQUIREMENTS:
+- Return ONLY valid JSON, no markdown formatting
+- Do NOT wrap the JSON in \`\`\`json tags
+- Ensure all strings are properly escaped
+- Use double quotes for all property names and string values
+- Do not include trailing commas
+
+Return your analysis as a PURE JSON object with these fields:
 {
   "id": "EXACT ID from the input - DO NOT CHANGE",
   "title": "Original title",
@@ -48,7 +62,7 @@ Return your analysis as a JSON object with these fields:
   "technicalComplexity": original number,
   "capitalIntensity": original number,
   "reasoning": { ...original reasoning object... },
-  "competitorAnalysis": "Your detailed competitor analysis here",
+  "competitorAnalysis": "Your detailed competitor analysis here (MUST include hyperlinks to competitor websites)",
   "blueOceanScore": calculated score,
   "blueOceanDetails": {
     "competitorScore": number,
@@ -61,14 +75,20 @@ Return your analysis as a JSON object with these fields:
 
 /**
  * Creates the competitor analysis agent
+ * Always uses OpenAI for web search capability
  * @param executionContext - The execution mode specific context
  */
-const createCompetitorAgent = (executionContext: string) => new Agent({
-  name: 'Competitor Analysis Agent',
-  instructions: createCompetitorAnalysisPrompt(executionContext),
-  model: configService.competitorModel,
-  tools: [webSearchTool()],
-});
+const createCompetitorAgent = (executionContext: string) => {
+  // Always use OpenAI for competitor agent (web search requirement)
+  const openAIModel = configService.getOpenAIModelForWebSearchAgent('competitor');
+  
+  return OpenAIDirectFactory.createAgent({
+    name: 'Competitor Analysis Agent',
+    instructions: createCompetitorAnalysisPrompt(executionContext),
+    model: openAIModel,
+    enableWebSearch: configService.enableWebSearch
+  }, OpenAIDirectFactory.validateApiKey());
+}
 
 /**
  * Analyzes a single business idea
@@ -90,8 +110,101 @@ Perform web searches to gather competitive intelligence, then provide your analy
     const result = await run(agent, promptText, { stream: false });
     const output = result.finalOutput || '';
     
-    // Parse the result
-    const parsed = JSON.parse(output);
+    console.log(`[Competitor Agent] Raw response length for "${idea.title}": ${output.length} characters`);
+    
+    // Clean up the JSON output from any markdown formatting
+    let cleanedContent = output.trim();
+    
+    // Log if markdown fences are detected
+    if (cleanedContent.startsWith('```json') || cleanedContent.startsWith('```')) {
+      console.log(`[Competitor Agent] Detected markdown code fences in response for "${idea.title}"`);
+    }
+    
+    // Remove markdown code fences
+    if (cleanedContent.startsWith('```json')) {
+      cleanedContent = cleanedContent.slice(7);
+    } else if (cleanedContent.startsWith('```')) {
+      cleanedContent = cleanedContent.slice(3);
+    }
+    
+    if (cleanedContent.endsWith('```')) {
+      cleanedContent = cleanedContent.slice(0, -3);
+    }
+    
+    cleanedContent = cleanedContent.trim();
+    
+    // Log first 200 chars of cleaned content for debugging
+    console.log(`[Competitor Agent] First 200 chars of cleaned content: ${cleanedContent.substring(0, 200)}...`);
+    
+    // More robust JSON parsing with fallback
+    let parsed: {
+      competitorAnalysis?: string;
+      blueOceanScore?: number;
+      blueOceanDetails?: {
+        competitorScore: number;
+        saturationScore: number;
+        innovationScore: number;
+        calculation: string;
+      };
+      [key: string]: unknown;
+    };
+    try {
+      parsed = JSON.parse(cleanedContent);
+      console.log(`[Competitor Agent] Successfully parsed JSON for "${idea.title}"`);
+    } catch (parseError) {
+      console.error(`[Competitor Agent] Initial JSON parse failed for "${idea.title}":`, parseError instanceof Error ? parseError.message : 'Unknown error');
+      console.log(`[Competitor Agent] Attempting fallback parsing...`);
+      
+      // Try to extract JSON from partial or malformed response
+      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        console.log(`[Competitor Agent] Found JSON-like structure, attempting to clean and parse...`);
+        try {
+          // Clean up common issues: trailing commas
+          let jsonStr = jsonMatch[0];
+          const originalLength = jsonStr.length;
+          jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+          if (originalLength !== jsonStr.length) {
+            console.log(`[Competitor Agent] Removed ${originalLength - jsonStr.length} characters (likely trailing commas)`);
+          }
+          parsed = JSON.parse(jsonStr);
+          console.log(`[Competitor Agent] Fallback parsing successful for "${idea.title}"`);
+        } catch (secondError) {
+          console.error(`[Competitor Agent] Fallback parsing also failed for "${idea.title}":`, secondError instanceof Error ? secondError.message : 'Unknown error');
+          console.log(`[Competitor Agent] Last 200 chars before failure: ...${jsonMatch[0].substring(Math.max(0, jsonMatch[0].length - 200))}`);
+          
+          // If still failing, create a default response
+          console.warn(`[Competitor Agent] Using default values for "${idea.title}"`);
+          parsed = {
+            ...idea,
+            competitorAnalysis: 'Analysis could not be completed due to response formatting issues.',
+            blueOceanScore: 5.0,
+            blueOceanDetails: {
+              competitorScore: 5,
+              saturationScore: 5,
+              innovationScore: 5,
+              calculation: 'Default scores applied due to parsing error'
+            }
+          };
+        }
+      } else {
+        // No JSON found, use defaults
+        console.error(`[Competitor Agent] No JSON structure found in response for "${idea.title}"`);
+        console.log(`[Competitor Agent] Response preview: ${cleanedContent.substring(0, 500)}...`);
+        console.warn(`[Competitor Agent] Using default values for "${idea.title}"`);
+        parsed = {
+          ...idea,
+          competitorAnalysis: 'Analysis could not be completed due to response formatting issues.',
+          blueOceanScore: 5.0,
+          blueOceanDetails: {
+            competitorScore: 5,
+            saturationScore: 5,
+            innovationScore: 5,
+            calculation: 'Default scores applied due to parsing error'
+          }
+        };
+      }
+    }
     
     // Ensure all required fields are present
     return {

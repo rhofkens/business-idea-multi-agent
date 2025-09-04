@@ -1,4 +1,4 @@
-import { Agent, run } from '@openai/agents';
+import { run } from '@openai/agents';
 import {
   BusinessPreferences,
   BusinessIdea,
@@ -11,6 +11,7 @@ import { parseCompleteIdeasFromBuffer } from '../utils/streaming-json-parser.js'
 import { configService } from '../services/config-service.js';
 import { ulid } from 'ulidx';
 import { ExecutionModeFactory } from '../execution-modes/base/ExecutionModeFactory.js';
+import { AgentFactory } from '../factories/agent-factory.js';
 
 const createSystemPrompt = (ideaIds: string[], executionContext: string) => `
 You are an elite business strategist and innovation expert with deep expertise in identifying market gaps, disruptive technologies, and emerging trends. Your task is to generate exactly 10 groundbreaking business ideas that push the boundaries of what's possible.
@@ -121,17 +122,21 @@ async function* executeIdeationAgent(
     : ''; // Empty context for backward compatibility
   
   // Create agent instances with the generated IDs and execution context
-  const ideationAgentInstance = new Agent({
+  const ideationAgentInstance = AgentFactory.createAgent({
     name: 'Ideation Agent',
     instructions: createSystemPrompt(ideaIds, executionContext),
-    model: configService.ideationModel,
-  });
+    provider: configService.ideationModelSpec.provider,
+    model: configService.ideationModelSpec.model,
+    enableWebSearch: false // Ideation doesn't use web search
+  }, configService.getApiKeyForProvider(configService.ideationModelSpec.provider));
   
-  const refinementAgentInstance = new Agent({
+  const refinementAgentInstance = AgentFactory.createAgent({
     name: 'Refinement Agent',
     instructions: refinementPrompt,
-    model: configService.ideationModel,
-  });
+    provider: configService.ideationModelSpec.provider,
+    model: configService.ideationModelSpec.model,
+    enableWebSearch: false
+  }, configService.getApiKeyForProvider(configService.ideationModelSpec.provider));
   
   // Phase 1: Generate initial ideas
   yield { type: 'status', data: 'Generating initial business ideas...' };

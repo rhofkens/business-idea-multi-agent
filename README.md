@@ -1,6 +1,6 @@
-# Business Idea Generator v2.5
+# Business Idea Generator v2.6
 
-A monorepo containing a multi-agent AI system that generates and evaluates business ideas, featuring a **modern web application with authentication**, **execution mode targeting** (Solopreneur vs Classic Startup), and a CLI tool for business idea generation.
+A monorepo containing a multi-agent AI system that generates and evaluates business ideas, featuring a **modern web application with authentication**, **execution mode targeting** (Solopreneur vs Classic Startup), **multi-provider AI model support**, and **web search capabilities** for competitive intelligence.
 
 ## 🏗️ Monorepo Structure
 
@@ -77,13 +77,32 @@ The system intelligently maps descriptive team compositions to the appropriate m
 - **Rich Descriptions**: AI provides detailed team composition insights
 - **Mode Column**: Visual badges showing execution mode with tooltips
 
+## 🤖 Multi-Provider AI Support (New in v2.6)
+
+The system now supports multiple AI providers for different agents:
+
+### Supported Providers
+- **OpenAI**: GPT-5 Mini, GPT-4o, and other OpenAI models
+- **Anthropic**: Claude Sonnet 4, Claude Opus 4.1
+- **Google**: Gemini 2.5 Flash, Gemini 2.5 Pro
+
+### Provider Capabilities
+| Agent | Multi-Provider Support | Web Search | Notes |
+|-------|------------------------|------------|-------|
+| Ideation | ✅ Full | Not needed | Can use any provider |
+| Documentation | ✅ Full | Not needed | Can use any provider |
+| Critic | ⚠️ Limited | ✅ Required | Uses OpenAI for web search |
+| Competitor | ⚠️ Limited | ✅ Required | Uses OpenAI for web search |
+
+**Note**: Web search capabilities currently require OpenAI models. If you configure Critic or Competitor agents with other providers, they will automatically use OpenAI when web search is enabled.
+
 ## How It Works
 
 The system operates as a chain of specialized AI agents, orchestrated to perform a sequence of tasks:
 
 1.  **Ideation Agent**: Receives user preferences (e.g., industry, business model) and generates a list of 10 initial business ideas. It scores each idea based on criteria like market potential and technical complexity.
-2.  **Competitor Agent**: Takes the top ideas and performs a competitive analysis using Blue Ocean Strategy principles. It evaluates market saturation, identifies competitors, and calculates a Blue Ocean Score for each idea.
-3.  **Business Critic Agent**: Critically evaluates ideas using web search capabilities for competitive intelligence. It performs risk assessment, validates assumptions, and calculates an Overall Score based on multiple weighted factors.
+2.  **Competitor Agent**: Takes the top ideas and performs a competitive analysis using Blue Ocean Strategy principles. It evaluates market saturation, identifies competitors with hyperlinked references, and calculates a Blue Ocean Score for each idea. **Now includes web search for real-time competitive intelligence.**
+3.  **Business Critic Agent**: Critically evaluates ideas using web search capabilities for competitive intelligence. It performs risk assessment, validates assumptions, and calculates an Overall Score based on multiple weighted factors. **Enhanced with better JSON parsing to handle large analyses.**
 4.  **Documentation Agent**: Generates comprehensive markdown reports for the validated business ideas, including detailed analysis, insights, and recommendations.
 
 ## Ideation Agent
@@ -257,8 +276,9 @@ npm run build
 # Start backend server in production
 cd packages/core && npm run start:server
 
-# Serve frontend (you'll need a static file server)
+# Build frontend for production
 npm run build:web
+# Then serve the built files from packages/web/dist using a static file server
 ```
 
 ### Command Line Options (CLI)
@@ -346,19 +366,29 @@ All generated reports are saved in the `docs/output/` directory with timestamped
 Create a `.env` file in the root directory with the following:
 
 ```env
-# Required for AI business idea generation
-OPENAI_API_KEY=your-api-key-here
+# Provider Configuration
+LLM_PROVIDER="openai"              # Options: "openai", "anthropic", "google"
+LLM_MODEL="gpt-5-mini-2025-08-07"  # Default model for selected provider
 
-# Model Configuration (all optional, defaults to 'o3')
-# Global model for all agents - can be 'o3' or 'gpt-4o'
-LLM_MODEL=o3
+# Provider API Keys (at least one required)
+OPENAI_API_KEY=your-openai-api-key-here
+ANTHROPIC_API_KEY=your-anthropic-api-key-here  # Optional
+GOOGLE_API_KEY=your-google-api-key-here        # Optional
 
-# Per-agent model configuration (overrides LLM_MODEL if specified)
-# Uncomment and set to use different models for specific agents
-# IDEATION_MODEL=o3          # Model for ideation agent
-# COMPETITOR_MODEL=o3        # Model for competitor analysis
-# CRITIC_MODEL=o3            # Model for business critic
-# DOCUMENTATION_MODEL=o3     # Model for documentation generation
+# Web Search Configuration
+ENABLE_WEB_SEARCH=true  # Enable web search for Critic and Competitor agents
+
+# Per-Agent Model Configuration (optional, format: provider:model)
+# Examples of multi-provider configuration:
+# IDEATION_MODEL="anthropic:claude-sonnet-4-20250514"     # Use Anthropic for ideation
+# DOCUMENTATION_MODEL="google:gemini-2.5-flash"           # Use Google for documentation
+# CRITIC_MODEL="openai:gpt-5-mini-2025-08-07"            # Must use OpenAI if web search enabled
+# COMPETITOR_MODEL="openai:gpt-5-mini-2025-08-07"        # Must use OpenAI if web search enabled
+
+# OpenAI Fallback Model for Web Search
+# Used when critic/competitor agents are configured with non-OpenAI providers
+# but web search is enabled (web search requires OpenAI)
+OPENAI_FALLBACK_MODEL="gpt-5-mini-2025-08-07"
 
 # Two-pass refinement for ideation (optional, default: true)
 USE_REFINEMENT=true

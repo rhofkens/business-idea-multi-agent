@@ -2,6 +2,17 @@ import { z } from 'zod';
 import { BusinessIdea, businessIdeaSchema } from '@business-idea/shared';
 
 /**
+ * Hosted tool type for provider-specific web search tools
+ */
+export interface HostedTool {
+  type: 'hosted_tool';
+  name: string;
+  providerData?: {
+    args?: Record<string, unknown>;
+  };
+}
+
+/**
  * Defines the output structure for the Ideation Agent.
  */
 export type IdeationAgentOutput = z.infer<typeof ideationAgentOutputSchema>;
